@@ -55,9 +55,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
       ipRules: []
       virtualNetworkRules: []
     }
-    // Advanced security features
-    provisioningState: 'Succeeded'
-    vaultUri: 'https://${keyVaultName}.vault.azure.net/'
   }
 }
 

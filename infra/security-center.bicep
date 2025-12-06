@@ -1,6 +1,8 @@
 // Security Center Configuration - Maximum Protection
 // High-threat environment protection
 
+targetScope = 'subscription'
+
 @description('Security contact email for alerts')
 param securityContactEmail string
 
@@ -19,14 +21,11 @@ param enableDefenderForResourceManager bool = true
 @description('Enable Defender for DNS')
 param enableDefenderForDns bool = true
 
-@description('Resource tags')
-param tags object = {}
-
 // Security Center Contact
 resource securityContact 'Microsoft.Security/securityContacts@2020-01-01-preview' = {
   name: 'default'
   properties: {
-    email: securityContactEmail
+    emails: securityContactEmail
     phone: ''
     alertNotifications: {
       state: 'On'
@@ -47,19 +46,6 @@ resource defenderForServers 'Microsoft.Security/pricings@2022-03-01' = if (enabl
   name: 'VirtualMachines'
   properties: {
     pricingTier: 'Standard'
-    subPlan: 'P2' // Enhanced security features
-    extensions: [
-      {
-        name: 'AgentlessVmScanning'
-        isEnabled: 'True'
-        additionalExtensionProperties: {}
-      }
-      {
-        name: 'SensitiveDataDiscovery'
-        isEnabled: 'True'
-        additionalExtensionProperties: {}
-      }
-    ]
   }
 }
 
@@ -68,21 +54,6 @@ resource defenderForStorage 'Microsoft.Security/pricings@2022-03-01' = if (enabl
   name: 'StorageAccounts'
   properties: {
     pricingTier: 'Standard'
-    subPlan: 'DefenderForStorageV2'
-    extensions: [
-      {
-        name: 'OnUploadMalwareScanning'
-        isEnabled: 'True'
-        additionalExtensionProperties: {
-          CapGBPerMonth: '500'
-        }
-      }
-      {
-        name: 'SensitiveDataDiscovery'
-        isEnabled: 'True'
-        additionalExtensionProperties: {}
-      }
-    ]
   }
 }
 
@@ -119,4 +90,4 @@ resource autoProvisioning 'Microsoft.Security/autoProvisioningSettings@2017-08-0
 }
 
 // Outputs
-output securityContactEmail string = securityContact.properties.email
+output securityContactEmail string = securityContact.properties.emails

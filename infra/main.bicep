@@ -55,7 +55,7 @@ module keyVault 'keyvault.bicep' = {
 // Security Center Configuration
 module securityCenter 'security-center.bicep' = {
   name: 'securityCenterDeployment'
-  scope: resourceGroup
+  scope: subscription()
   params: {
     securityContactEmail: securityContactEmail
     enableDefenderForServers: true
@@ -63,7 +63,6 @@ module securityCenter 'security-center.bicep' = {
     enableDefenderForKeyVault: true
     enableDefenderForResourceManager: true
     enableDefenderForDns: true
-    tags: tags
   }
 }
 
@@ -109,13 +108,8 @@ module azurePolicyAssignment 'azure-policy.bicep' = {
   scope: resourceGroup
   params: {
     policyAssignmentName: 'security-baseline-assignment'
-    resourceGroupId: resourceGroup.id
-    tags: tags
   }
 }
 
 // Outputs
 output resourceGroupName string = resourceGroup.name
-output keyVaultId string = keyVault.outputs.keyVaultId
-output logAnalyticsWorkspaceId string = logAnalytics.outputs.workspaceId
-output storageAccountId string = storageAccount.outputs.storageAccountId
