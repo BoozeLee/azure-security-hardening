@@ -43,10 +43,12 @@ def test_receive_message_missing_message(client):
     assert resp.status_code == 400
 
 
-def test_receive_message_with_token_auth(client, monkeypatch):
-    # Toggle server token and ensure auth required
+def test_receive_message_with_token_auth(client, monkeypatch, tmp_path):
     monkeypatch.setenv('QWE_SERVER_TOKEN', 's3cr3t')
     # ensure log file exists
+    msgfile = tmp_path / 'messages.log'
+    msgfile.write_text('[]')
+    # Valid token
     msgfile = tmp_path / 'messages.log'
     msgfile.write_text('[]')
     # Valid token
