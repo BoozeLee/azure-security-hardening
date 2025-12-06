@@ -152,6 +152,7 @@ module backupRecovery 'backup-recovery.bicep' = {
     backupRetentionDays: 90
     enableGeoRedundantBackup: true
     enableCrossRegionRestore: true
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
     tags: tags
   }
 }

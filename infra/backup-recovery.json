@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "2699907174110432936"
+      "templateHash": "12334660029771523409"
     }
   },
   "parameters": {
@@ -41,6 +41,12 @@
       "defaultValue": true,
       "metadata": {
         "description": "Enable cross-region restore"
+      }
+    },
+    "logAnalyticsWorkspaceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics Workspace ID for diagnostics"
       }
     },
     "tags": {
@@ -338,7 +344,7 @@
       "scope": "[format('Microsoft.RecoveryServices/vaults/{0}', parameters('vaultName'))]",
       "name": "[format('{0}-diagnostics', parameters('vaultName'))]",
       "properties": {
-        "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]",
+        "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
         "logs": [
           {
             "categoryGroup": "allLogs",

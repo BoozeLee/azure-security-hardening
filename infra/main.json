@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "17742965381373672746"
+      "templateHash": "13072950996969731926"
     }
   },
   "parameters": {
@@ -1489,6 +1489,9 @@
           "enableCrossRegionRestore": {
             "value": true
           },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeployment'), '2025-04-01').outputs.workspaceId.value]"
+          },
           "tags": {
             "value": "[variables('tags')]"
           }
@@ -1500,7 +1503,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "2699907174110432936"
+              "templateHash": "12334660029771523409"
             }
           },
           "parameters": {
@@ -1536,6 +1539,12 @@
               "defaultValue": true,
               "metadata": {
                 "description": "Enable cross-region restore"
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics Workspace ID for diagnostics"
               }
             },
             "tags": {
@@ -1833,7 +1842,7 @@
               "scope": "[format('Microsoft.RecoveryServices/vaults/{0}', parameters('vaultName'))]",
               "name": "[format('{0}-diagnostics', parameters('vaultName'))]",
               "properties": {
-                "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]",
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
                 "logs": [
                   {
                     "categoryGroup": "allLogs",
@@ -1885,6 +1894,7 @@
         }
       },
       "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeployment')]",
         "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
       ]
     },
@@ -1931,7 +1941,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "8398001630807209557"
+              "templateHash": "8250533412468506951"
             }
           },
           "parameters": {
@@ -2328,7 +2338,7 @@
                           }
                         ],
                         "operator": "Contains",
-                        "negationConditon": false,
+                        "negationCondition": false,
                         "matchValues": [
                           "bot",
                           "crawler",
@@ -2355,7 +2365,7 @@
                           }
                         ],
                         "operator": "IPMatch",
-                        "negationConditon": false,
+                        "negationCondition": false,
                         "matchValues": [
                           "0.0.0.0/0"
                         ]

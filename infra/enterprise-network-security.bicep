@@ -370,7 +370,7 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
               }
             ]
             operator: 'Contains'
-            negationConditon: false
+            negationCondition: false
             matchValues: [
               'bot'
               'crawler'
@@ -397,7 +397,7 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
               }
             ]
             operator: 'IPMatch'
-            negationConditon: false
+            negationCondition: false
             matchValues: [
               '0.0.0.0/0'
             ]

@@ -18,6 +18,9 @@ param enableGeoRedundantBackup bool = true
 @description('Enable cross-region restore')
 param enableCrossRegionRestore bool = true
 
+@description('Log Analytics Workspace ID for diagnostics')
+param logAnalyticsWorkspaceId string
+
 @description('Resource tags')
 param tags object = {}
 
@@ -298,7 +301,7 @@ resource diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-pr
   scope: recoveryServicesVault
   name: '${vaultName}-diagnostics'
   properties: {
-    workspaceId: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod'
+    workspaceId: logAnalyticsWorkspaceId
     logs: [
       {
         categoryGroup: 'allLogs'
