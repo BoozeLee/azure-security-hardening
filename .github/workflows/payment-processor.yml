@@ -176,14 +176,16 @@ jobs:
             --title "🚀 New Customer: ${{ steps.payment.outputs.email }}" \
             --body "Customer purchased ${{ steps.payment.outputs.product }} for ${{ steps.payment.outputs.amount }}. License package ready for delivery. Payment ID: ${{ steps.payment.outputs.payment_id }}"
 
-      - name: "Commit Customer Data"
-        run: |
-          git config user.name "payment-bot"
-          git config user.email "payments@bakerstreetproject221b.store"
+      - name: "Upload Customer Data (artifact, do not commit)"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: customers-${{ steps.payment.outputs.payment_id }}
+          path: customers.json
 
-          git add customers.json
-          git commit -m "💰 New customer: ${{ steps.payment.outputs.email }} - ${{ steps.payment.outputs.product }}"
-          git push
+      - name: "Notify Admin (secure)"
+        run: |
+          echo "New customer ${{ steps.payment.outputs.email }} purchased ${{ steps.payment.outputs.product }}. Uploaded customer artifact customers-${{ steps.payment.outputs.payment_id }}." | gh issue create --title "New customer purchased" --body - || true
 
       - name: "Upload License Package"
         uses: actions/upload-artifact@v4

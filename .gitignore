@@ -1,0 +1,12 @@
+# Ignore customer artifacts and sensitive files
+customers.json
+customer-package.tar.gz
+customer-delivery/
+dashboard.json
+*.pem
+*.key
+*.env
+node_modules/
+__pycache__/
+*.pyc
+.venv/

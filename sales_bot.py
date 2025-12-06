@@ -122,6 +122,29 @@ class SalesBot:
             
         return leads
 
+    def generate_mock_prospects(self, count):
+        """Generate mock prospects for LinkedIn-like responses (names and titles)
+        This mirrors generate_mock_leads but ensures consistent fields used by
+        the email campaign and outreach code.
+        """
+        # Re-use mock leads generator but ensure names/titles exist
+        mock_leads = self.generate_mock_leads(count)
+        prospects = []
+        for i, lead in enumerate(mock_leads):
+            prospects.append({
+                "name": lead.get('name', f"Prospect {i+1}"),
+                "title": lead.get('title', 'CTO'),
+                "company": lead.get('company', 'Acme Inc'),
+                "email": lead.get('email', f"contact{i+1}@acme.com"),
+                "industry": lead.get('industry', 'Technology'),
+                "company_size": lead.get('company_size', '100'),
+                "pain_points": lead.get('pain_points', ['security']),
+                "azure_usage": lead.get('azure_usage', 'confirmed'),
+                "lead_score": lead.get('lead_score', 60),
+                "source": 'mock_prospects'
+            })
+        return prospects
+
     def calculate_lead_score(self, company_data):
         """Calculate lead score based on multiple factors"""
         score = 50  # Base score
@@ -142,6 +165,35 @@ class SalesBot:
             score += 20
             
         return min(score, 100)
+
+    def enrich_prospect_data(self, leads):
+        """Enrich and normalize prospect data for scoring and downstream use.
+        This mock implementation fills missing fields and computes a lead_score
+        if absent.
+        """
+        enriched = []
+        for lead in leads:
+            # fill missing fields
+            lead.setdefault('industry', 'Technology')
+            lead.setdefault('company_size', 100)
+            lead.setdefault('azure_usage', 'confirmed')
+            if 'lead_score' not in lead or not lead.get('lead_score'):
+                # derive score from known fields
+                try:
+                    size_val = int(lead.get('company_size', 100))
+                except Exception:
+                    size_val = 100
+                score = 50
+                if size_val > 500: score += 30
+                elif size_val > 100: score += 20
+                elif size_val > 50: score += 10
+                if lead.get('industry') in ['Financial', 'Healthcare', 'Government', 'Financial Services']:
+                    score += 25
+                if 'azure' in str(lead.get('azure_usage', '')).lower():
+                    score += 20
+                lead['lead_score'] = min(score, 100)
+            enriched.append(lead)
+        return enriched
 
     def send_email_campaign(self, leads, campaign_type="cold_outreach"):
         """Send personalized emails to leads"""
