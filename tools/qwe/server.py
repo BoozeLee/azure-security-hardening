@@ -45,6 +45,7 @@ def append_message(channel, message):
         f.seek(0)
         f.truncate(0)
         json.dump(messages, f, indent=2)
+        return messages[-1].get('id')
 
 
 @app.route('/api/v1/agents/message', methods=['POST'])
@@ -67,10 +68,10 @@ def receive_message():
             'agent': payload.get('agent', 'unknown'),
             'meta': payload.get('meta'),
         }
-        append_message(channel, message)
+        msg_id = append_message(channel, message)
         print(f"[qwe] Received message on channel={channel} message={message}")
         # Return a status JSON including a generated message id and the agent
-        return jsonify({'status': 'ok', 'message': 'received', 'agent': message.get('agent'), 'channel': channel, 'message_id': messages[-1].get('id')}), 201
+        return jsonify({'status': 'ok', 'message': 'received', 'agent': message.get('agent'), 'channel': channel, 'message_id': msg_id}), 201
     except Exception as ex:
         print('Error receiving message:', ex)
         return jsonify({'error': str(ex)}), 500
