@@ -167,6 +167,7 @@ module enterpriseNetworkSecurity 'enterprise-network-security.bicep' = {
     enablePremiumFirewall: true
     enableThreatIntelligence: true
     enableDnsProxy: true
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
     tags: tags
   }
 }

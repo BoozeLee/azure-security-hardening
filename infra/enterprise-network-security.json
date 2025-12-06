@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "6166400582740803816"
+      "templateHash": "8398001630807209557"
     }
   },
   "parameters": {
@@ -47,6 +47,12 @@
       "defaultValue": true,
       "metadata": {
         "description": "Enable DNS proxy"
+      }
+    },
+    "logAnalyticsWorkspaceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics Workspace ID for diagnostics"
       }
     },
     "tags": {
@@ -109,7 +115,11 @@
           "isEnabled": true,
           "retentionDays": 90,
           "logAnalyticsResources": {
-            "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]"
+            "workspaces": [
+              {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]"
+              }
+            ]
           }
         }
       }
@@ -158,7 +168,7 @@
                 ],
                 "targetFqdns": [
                   "*.backup.windowsazure.com",
-                  "*.blob.core.windows.net"
+                  "[format('*.blob.{0}', environment().suffixes.storage)]"
                 ],
                 "sourceAddresses": [
                   "*"
@@ -291,7 +301,7 @@
       "scope": "[format('Microsoft.Network/azureFirewalls/{0}', parameters('firewallName'))]",
       "name": "[format('{0}-diagnostics', parameters('firewallName'))]",
       "properties": {
-        "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]",
+        "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
         "logs": [
           {
             "categoryGroup": "allLogs",
@@ -559,7 +569,7 @@
       "scope": "[format('Microsoft.Network/applicationGateways/{0}', 'enterprise-waf')]",
       "name": "waf-diagnostics",
       "properties": {
-        "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]",
+        "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
         "logs": [
           {
             "categoryGroup": "allLogs",

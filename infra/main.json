@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "10699814347471368620"
+      "templateHash": "17742965381373672746"
     }
   },
   "parameters": {
@@ -1917,6 +1917,9 @@
           "enableDnsProxy": {
             "value": true
           },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeployment'), '2025-04-01').outputs.workspaceId.value]"
+          },
           "tags": {
             "value": "[variables('tags')]"
           }
@@ -1928,7 +1931,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "15446854726635739923"
+              "templateHash": "8398001630807209557"
             }
           },
           "parameters": {
@@ -1970,6 +1973,12 @@
               "defaultValue": true,
               "metadata": {
                 "description": "Enable DNS proxy"
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics Workspace ID for diagnostics"
               }
             },
             "tags": {
@@ -2034,7 +2043,7 @@
                   "logAnalyticsResources": {
                     "workspaces": [
                       {
-                        "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]"
+                        "workspaceId": "[parameters('logAnalyticsWorkspaceId')]"
                       }
                     ]
                   }
@@ -2218,7 +2227,7 @@
               "scope": "[format('Microsoft.Network/azureFirewalls/{0}', parameters('firewallName'))]",
               "name": "[format('{0}-diagnostics', parameters('firewallName'))]",
               "properties": {
-                "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]",
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
                 "logs": [
                   {
                     "categoryGroup": "allLogs",
@@ -2486,7 +2495,7 @@
               "scope": "[format('Microsoft.Network/applicationGateways/{0}', 'enterprise-waf')]",
               "name": "waf-diagnostics",
               "properties": {
-                "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]",
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
                 "logs": [
                   {
                     "categoryGroup": "allLogs",
@@ -2534,6 +2543,7 @@
         }
       },
       "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeployment')]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'networkSecurityDeployment')]",
         "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
       ]

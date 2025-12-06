@@ -21,6 +21,9 @@ param enableThreatIntelligence bool = true
 @description('Enable DNS proxy')
 param enableDnsProxy bool = true
 
+@description('Log Analytics Workspace ID for diagnostics')
+param logAnalyticsWorkspaceId string
+
 @description('Resource tags')
 param tags object = {}
 
@@ -91,7 +94,7 @@ resource firewallPolicy 'Microsoft.Network/firewallPolicies@2023-09-01' = {
       logAnalyticsResources: {
         workspaces: [
           {
-            workspaceId: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod'
+            workspaceId: logAnalyticsWorkspaceId
           }
         ]
       }
@@ -268,7 +271,7 @@ resource firewallDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-p
   scope: firewall
   name: '${firewallName}-diagnostics'
   properties: {
-    workspaceId: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod'
+    workspaceId: logAnalyticsWorkspaceId
     logs: [
       {
         categoryGroup: 'allLogs'
@@ -529,7 +532,7 @@ resource wafDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-previe
   scope: applicationGateway
   name: 'waf-diagnostics'
   properties: {
-    workspaceId: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod'
+    workspaceId: logAnalyticsWorkspaceId
     logs: [
       {
         categoryGroup: 'allLogs'
