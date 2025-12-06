@@ -10,6 +10,15 @@ import server as qserver
 
 @pytest.fixture
 def client():
+    import importlib.metadata
+    import werkzeug as _werkzeug
+    # Some Werkzeug installs don't expose __version__ on the module; ensure it's present for Flask test client
+    if not hasattr(_werkzeug, '__version__'):
+        try:
+            _werkzeug.__version__ = importlib.metadata.version('Werkzeug')
+        except Exception:
+            _werkzeug.__version__ = 'unknown'
+
     app = qserver.app
     app.config['TESTING'] = True
     with app.test_client() as client:
@@ -19,6 +28,8 @@ def client():
 def test_receive_message_success(client, tmp_path, monkeypatch):
     # Ensure messages.log is in tmp_path
     msgfile = tmp_path / 'messages.log'
+    # Ensure messages log exists before server tries to write to it
+    msgfile.write_text('[]')
     monkeypatch.setattr(qserver, 'LOG_FILE', str(msgfile))
     resp = client.post('/api/v1/agents/message', json={'channel': 'agents', 'message': 'hello', 'agent': 'pytest'})
     assert resp.status_code == 201
@@ -35,6 +46,9 @@ def test_receive_message_missing_message(client):
 def test_receive_message_with_token_auth(client, monkeypatch):
     # Toggle server token and ensure auth required
     monkeypatch.setenv('QWE_SERVER_TOKEN', 's3cr3t')
+    # ensure log file exists
+    msgfile = tmp_path / 'messages.log'
+    msgfile.write_text('[]')
     # Valid token
     headers = {'Authorization': 'Bearer s3cr3t'}
     resp = client.post('/api/v1/agents/message', json={'channel': 'agents', 'message': 'hello', 'agent': 'pytest'}, headers=headers)

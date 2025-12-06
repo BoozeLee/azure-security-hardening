@@ -51,8 +51,8 @@ if __name__ == '__main__':
     sp_send = subparsers.add_parser('send')
     sp_send.add_argument('--channel', default='agents')
     sp_send.add_argument('--message', required=True)
-        sp_send.add_argument('--agent', default='unknown')
-        sp_send.add_argument('--token', default='')
+    sp_send.add_argument('--agent', default='unknown')
+    sp_send.add_argument('--token', default='')
     sp_send.add_argument('--server', default='http://localhost:9001')
 
     sp_list = subparsers.add_parser('list')
@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.cmd == 'send':
-            sys.exit(send_message(args.server, args.channel, args.message, agent=args.agent, token=args.token))
+        sys.exit(send_message(args.server, args.channel, args.message, agent=args.agent, token=args.token))
     elif args.cmd == 'list':
         sys.exit(list_messages(args.server))
     else:
