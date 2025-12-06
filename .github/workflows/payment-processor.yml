@@ -1,0 +1,219 @@
+name: "Payment Processor & License Delivery"
+
+on:
+  repository_dispatch:
+    types: [stripe_payment, subscription_created, subscription_cancelled]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+jobs:
+  process-payment:
+    name: "Process Customer Payment"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Parse Payment Data"
+        id: payment
+        run: |
+          # Extract customer data from webhook
+          CUSTOMER_EMAIL="${{ github.event.client_payload.customer_email }}"
+          PRODUCT_NAME="${{ github.event.client_payload.product_name }}"  
+          AMOUNT="${{ github.event.client_payload.amount }}"
+          PAYMENT_ID="${{ github.event.client_payload.payment_id }}"
+
+          echo "email=$CUSTOMER_EMAIL" >> $GITHUB_OUTPUT
+          echo "product=$PRODUCT_NAME" >> $GITHUB_OUTPUT
+          echo "amount=$AMOUNT" >> $GITHUB_OUTPUT
+          echo "payment_id=$PAYMENT_ID" >> $GITHUB_OUTPUT
+
+      - name: "Add Customer to Database"
+        run: |
+          # Add customer to customers.json
+          DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          if [ ! -f customers.json ]; then
+            echo "[]" > customers.json
+          fi
+
+          # Add new customer record
+          jq ". += [{
+            \"email\": \"${{ steps.payment.outputs.email }}\",
+            \"product\": \"${{ steps.payment.outputs.product }}\", 
+            \"amount\": \"${{ steps.payment.outputs.amount }}\",
+            \"payment_id\": \"${{ steps.payment.outputs.payment_id }}\",
+            \"purchase_date\": \"$DATE\",
+            \"status\": \"active\",
+            \"support_expires\": \"$(date -d '+30 days' -u +"%Y-%m-%dT%H:%M:%SZ")\"
+          }]" customers.json > customers_temp.json
+
+          mv customers_temp.json customers.json
+
+          echo "✅ Customer added: ${{ steps.payment.outputs.email }}"
+
+      - name: "Generate License Package"
+        run: |
+          mkdir -p customer-delivery
+
+          # Copy appropriate license based on product
+          if [[ "${{ steps.payment.outputs.product }}" == *"Professional"* ]]; then
+            cp -r infra/ customer-delivery/
+            cp auto-deploy-azure-security.sh customer-delivery/
+            cp README.md customer-delivery/
+            
+            # Create professional license
+            cat > customer-delivery/LICENSE.txt << 'EOF'
+          AZURE SECURITY HARDENING - PROFESSIONAL LICENSE
+
+          Customer: ${{ steps.payment.outputs.email }}
+          Product: ${{ steps.payment.outputs.product }}
+          Purchase Date: $(date)
+          Payment ID: ${{ steps.payment.outputs.payment_id }}
+
+          GRANTED RIGHTS:
+          ✅ Production use authorized
+          ✅ Modification and customization allowed
+          ✅ 30 days email support included
+          ✅ Money-back guarantee (30 days)
+
+          SUPPORT CONTACT:
+          kiliaan@bakerstreetproject221b.store
+          Subject: [SUPPORT-${{ steps.payment.outputs.payment_id }}]
+          EOF
+
+          elif [[ "${{ steps.payment.outputs.product }}" == *"Enterprise"* ]]; then
+            cp -r infra/ customer-delivery/
+            cp -r .github/ customer-delivery/
+            cp *.sh customer-delivery/
+            cp *.md customer-delivery/
+            
+            # Create enterprise license with additional features
+            cat > customer-delivery/LICENSE.txt << 'EOF'
+          AZURE SECURITY HARDENING - ENTERPRISE LICENSE
+
+          Customer: ${{ steps.payment.outputs.email }}
+          Product: ${{ steps.payment.outputs.product }}
+          Purchase Date: $(date)
+          Payment ID: ${{ steps.payment.outputs.payment_id }}
+
+          GRANTED RIGHTS:
+          ✅ Production use authorized  
+          ✅ Multi-environment deployment
+          ✅ White-label reselling allowed
+          ✅ 90 days dedicated support
+          ✅ Architecture review sessions
+          ✅ Custom compliance consultation
+
+          ENTERPRISE SUPPORT:
+          kiliaan@bakerstreetproject221b.store
+          Subject: [ENTERPRISE-${{ steps.payment.outputs.payment_id }}]
+          Response SLA: 4-24 hours
+          EOF
+          fi
+
+          # Package for delivery
+          tar -czf customer-package.tar.gz customer-delivery/
+
+      - name: "Send License Email"
+        run: |
+          # Create delivery email content
+          cat > delivery-email.md << 'EOF'
+          Subject: ✅ Your Azure Security Hardening License is Ready!
+
+          Hi there!
+
+          Thank you for purchasing Azure Security Hardening (${{ steps.payment.outputs.product }})!
+
+          🎯 **Your license is attached** to this email as a secure download.
+
+          ## 🚀 Quick Start
+
+          1. Download and extract the package
+          2. Run `./auto-deploy-azure-security.sh`
+          3. Follow the setup instructions in README.md
+
+          ## ✅ What's Included
+
+          - Complete Bicep infrastructure templates
+          - Automated deployment scripts
+          - Professional documentation
+          - Security validation workflows
+
+          ## 🛡️ Support Information
+
+          Email: kiliaan@bakerstreetproject221b.store
+          Subject: [SUPPORT-${{ steps.payment.outputs.payment_id }}]
+
+          Response time: 24-48 hours
+          Support expires: 30 days from purchase
+
+          ## 💰 Money-Back Guarantee
+
+          Not satisfied? Full refund within 30 days, no questions asked.
+
+          ## 🤝 Need Help?
+
+          - Technical questions: Include your payment ID
+          - Custom requirements: Enterprise consulting available  
+          - Additional environments: Volume discounts available
+
+          Welcome to professional Azure security!
+
+          Best regards,
+          Kiliaan Derks
+          Azure Security Architect
+          kiliaan@bakerstreetproject221b.store
+          EOF
+
+          echo "📧 Email content generated for ${{ steps.payment.outputs.email }}"
+
+          # In real implementation, this would send via SendGrid/Mailgun
+          # For now, create a GitHub issue as notification
+          gh issue create \
+            --title "🚀 New Customer: ${{ steps.payment.outputs.email }}" \
+            --body "Customer purchased ${{ steps.payment.outputs.product }} for ${{ steps.payment.outputs.amount }}. License package ready for delivery. Payment ID: ${{ steps.payment.outputs.payment_id }}"
+
+      - name: "Commit Customer Data"
+        run: |
+          git config user.name "payment-bot"
+          git config user.email "payments@bakerstreetproject221b.store"
+
+          git add customers.json
+          git commit -m "💰 New customer: ${{ steps.payment.outputs.email }} - ${{ steps.payment.outputs.product }}"
+          git push
+
+      - name: "Upload License Package"
+        uses: actions/upload-artifact@v4
+        with:
+          name: customer-license-${{ steps.payment.outputs.payment_id }}
+          path: customer-package.tar.gz
+
+  handle-subscription:
+    name: "Handle Monthly Subscriptions"
+    runs-on: ubuntu-latest
+    if: github.event.action == 'subscription_created' || github.event.action == 'subscription_cancelled'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Update Subscription Status"
+        run: |
+          CUSTOMER_EMAIL="${{ github.event.client_payload.customer_email }}"
+          ACTION="${{ github.event.action }}"
+
+          if [[ "$ACTION" == "subscription_created" ]]; then
+            echo "✅ New subscription: $CUSTOMER_EMAIL"
+            # Add to active subscribers list
+            # Send welcome email
+            # Grant ongoing access
+          else
+            echo "❌ Cancelled subscription: $CUSTOMER_EMAIL"  
+            # Remove from active subscribers
+            # Send exit survey
+            # Retain access until period end
+          fi
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
