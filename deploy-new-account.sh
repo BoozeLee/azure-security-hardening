@@ -43,7 +43,7 @@ az deployment group create \
         keyVaultName="$KV_NAME" \
         storageAccountName="$ST_NAME" \
         logAnalyticsWorkspaceName="law-bakerstreet-security" \
-        securityContactEmail="kiliaan@bakerstreetproject221b.store" \
+        securityContactEmail="kiliaan@bakerstreetproject.com" \
         location="$LOCATION" \
     --verbose
 
@@ -57,7 +57,7 @@ if [ $? -eq 0 ]; then
     echo "   📍 Location: $LOCATION"
     echo ""
     echo "🛡️ SECURITY STATUS: MAXIMUM PROTECTION ACTIVE!"
-    echo "📧 Contact: kiliaan@bakerstreetproject221b.store"
+    echo "📧 Contact: kiliaan@bakerstreetproject.com"
     echo ""
     echo "🌐 View in portal: https://portal.azure.com"
 else

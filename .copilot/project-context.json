@@ -34,7 +34,7 @@
     "contextHints": {
       "architecture": "Azure cloud infrastructure with maximum security controls",
       "compliance": "High-threat environment protection requirements",
-      "owner": "kiliaan@bakerstreetproject221b.store",
+      "owner": "kiliaan@bakerstreetproject.com",
       "environment": "Production security-hardened resources"
     },
     "codeStyle": {

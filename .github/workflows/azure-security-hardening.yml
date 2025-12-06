@@ -1,275 +1,275 @@
-name: 'Azure Security Hardening - High Threat Environment'
+name: "Azure Security Hardening - High Threat Environment"
 
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Deployment environment'
+        description: "Deployment environment"
         required: true
-        default: 'prod'
+        default: "prod"
         type: choice
         options:
           - prod
           - staging
       force_deploy:
-        description: 'Force deployment (skip what-if)'
+        description: "Force deployment (skip what-if)"
         required: false
         default: false
         type: boolean
 
 env:
-  AZURE_RESOURCE_GROUP: 'sec-bsp-rg-prod'
-  AZURE_LOCATION: 'westeurope'
-  SECURITY_EMAIL: 'kiliaan@bakerstreetproject221b.store'
-  RESOURCE_PREFIX: 'sec-bsp'
+  AZURE_RESOURCE_GROUP: "sec-bsp-rg-prod"
+  AZURE_LOCATION: "westeurope"
+  SECURITY_EMAIL: "kiliaan@bakerstreetproject.com"
+  RESOURCE_PREFIX: "sec-bsp"
   ENVIRONMENT: '${{ github.event.inputs.environment || "prod" }}'
 
 permissions:
-  id-token: write   # Required for OIDC authentication
-  contents: read    # Required to read repo contents
-  actions: write    # Required for workflow management
+  id-token: write # Required for OIDC authentication
+  contents: read # Required to read repo contents
+  actions: write # Required for workflow management
 
 jobs:
   validate-and-deploy:
-    name: 'Security Hardening Deployment'
+    name: "Security Hardening Deployment"
     runs-on: ubuntu-latest
     environment: production
-    
+
     steps:
-    - name: 'Checkout Repository'
-      uses: actions/checkout@v4
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
 
-    - name: 'Azure Login via OIDC'
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: "Azure Login via OIDC"
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: 'Install Azure CLI Extensions'
-      run: |
-        az extension add --name security
-        az extension add --name log-analytics
-        az extension add --name policy-insights
+      - name: "Install Azure CLI Extensions"
+        run: |
+          az extension add --name security
+          az extension add --name log-analytics
+          az extension add --name policy-insights
 
-    - name: 'Set Azure Subscription Context'
-      run: |
-        az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        echo "✅ Azure subscription context set"
+      - name: "Set Azure Subscription Context"
+        run: |
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          echo "✅ Azure subscription context set"
 
-    - name: 'Validate Bicep Templates'
-      run: |
-        echo "🔍 Validating main.bicep template..."
-        az deployment sub validate \
-          --location ${{ env.AZURE_LOCATION }} \
-          --template-file infra/main.bicep \
-          --parameters environmentName=${{ env.ENVIRONMENT }} \
-                      location=${{ env.AZURE_LOCATION }} \
-                      securityContactEmail=${{ env.SECURITY_EMAIL }} \
-                      resourcePrefix=${{ env.RESOURCE_PREFIX }}
-        echo "✅ Bicep template validation completed"
-
-    - name: 'Preview Deployment (What-If)'
-      if: ${{ !github.event.inputs.force_deploy }}
-      run: |
-        echo "📋 Running deployment preview..."
-        az deployment sub what-if \
-          --location ${{ env.AZURE_LOCATION }} \
-          --template-file infra/main.bicep \
-          --parameters environmentName=${{ env.ENVIRONMENT }} \
-                      location=${{ env.AZURE_LOCATION }} \
-                      securityContactEmail=${{ env.SECURITY_EMAIL }} \
-                      resourcePrefix=${{ env.RESOURCE_PREFIX }}
-
-    - name: 'Deploy Azure Security Infrastructure'
-      run: |
-        echo "🚀 Deploying security hardened infrastructure..."
-        az deployment sub create \
-          --name "security-deployment-$(date +%Y%m%d-%H%M%S)" \
-          --location ${{ env.AZURE_LOCATION }} \
-          --template-file infra/main.bicep \
-          --parameters environmentName=${{ env.ENVIRONMENT }} \
-                      location=${{ env.AZURE_LOCATION }} \
-                      securityContactEmail=${{ env.SECURITY_EMAIL }} \
-                      resourcePrefix=${{ env.RESOURCE_PREFIX }} \
-          --confirm-with-what-if
-        echo "✅ Infrastructure deployment completed"
-
-    - name: 'Enable Microsoft Defender for Cloud - All Services'
-      run: |
-        echo "🛡️ Enabling Microsoft Defender for all services..."
-        
-        # Enable Defender for Virtual Machines (P2 - Enhanced)
-        az security pricing create --name VirtualMachines --tier Standard
-        
-        # Enable Defender for Storage (V2)
-        az security pricing create --name StorageAccounts --tier Standard
-        
-        # Enable Defender for Key Vault
-        az security pricing create --name KeyVaults --tier Standard
-        
-        # Enable Defender for Resource Manager
-        az security pricing create --name Arm --tier Standard
-        
-        # Enable Defender for DNS
-        az security pricing create --name Dns --tier Standard
-        
-        # Enable Defender for Container Registries
-        az security pricing create --name ContainerRegistry --tier Standard
-        
-        # Enable Defender for Kubernetes
-        az security pricing create --name KubernetesService --tier Standard
-        
-        echo "✅ Microsoft Defender for Cloud enabled for all services"
-
-    - name: 'Configure Security Center Auto-Provisioning'
-      run: |
-        echo "⚙️ Configuring Security Center auto-provisioning..."
-        az security auto-provisioning-setting update --name default --auto-provision on
-        echo "✅ Auto-provisioning enabled"
-
-    - name: 'Configure Network Security - Restrict Public Access'
-      run: |
-        echo "🔐 Configuring network security restrictions..."
-        
-        # Get storage account name (dynamically generated)
-        STORAGE_ACCOUNT_NAME=$(az storage account list \
-          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --query "[?starts_with(name, 'secbspsaprod')].name" -o tsv)
-        
-        if [ -n "$STORAGE_ACCOUNT_NAME" ]; then
-          # Disable public network access for storage account
-          az storage account update \
-            --name "$STORAGE_ACCOUNT_NAME" \
-            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-            --public-network-access Disabled
-          echo "✅ Storage account public access disabled"
-        fi
-        
-        # Get Key Vault name
-        KEY_VAULT_NAME=$(az keyvault list \
-          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --query "[0].name" -o tsv)
-        
-        if [ -n "$KEY_VAULT_NAME" ]; then
-          # Disable public network access for Key Vault
-          az keyvault update \
-            --name "$KEY_VAULT_NAME" \
-            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-            --public-network-access Disabled
-          echo "✅ Key Vault public access disabled"
-        fi
-
-    - name: 'Verify Security Policies Assignment'
-      run: |
-        echo "📋 Verifying security policy assignments..."
-        az policy assignment list \
-          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --query "[].{Name:name,PolicyDefinition:policyDefinitionId,EnforcementMode:enforcementMode}" \
-          --output table
-        echo "✅ Security policies verified"
-
-    - name: 'Configure Diagnostic Settings and Monitoring'
-      run: |
-        echo "📊 Configuring diagnostic settings..."
-        
-        # Get Log Analytics Workspace ID
-        WORKSPACE_ID=$(az monitor log-analytics workspace show \
-          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --workspace-name "${{ env.RESOURCE_PREFIX }}-law-${{ env.ENVIRONMENT }}" \
-          --query "id" -o tsv)
-        
-        if [ -n "$WORKSPACE_ID" ]; then
-          echo "Log Analytics Workspace ID: $WORKSPACE_ID"
-          
-          # Enable Activity Log diagnostic settings
-          az monitor diagnostic-settings subscription create \
-            --name "activity-logs-to-law" \
+      - name: "Validate Bicep Templates"
+        run: |
+          echo "🔍 Validating main.bicep template..."
+          az deployment sub validate \
             --location ${{ env.AZURE_LOCATION }} \
-            --workspace "$WORKSPACE_ID" \
-            --logs '[
-              {
-                "category": "Administrative",
-                "enabled": true
-              },
-              {
-                "category": "Security", 
-                "enabled": true
-              },
-              {
-                "category": "Alert",
-                "enabled": true
-              },
-              {
-                "category": "Policy",
-                "enabled": true
-              }
-            ]'
-          echo "✅ Activity Log diagnostic settings configured"
-        fi
+            --template-file infra/main.bicep \
+            --parameters environmentName=${{ env.ENVIRONMENT }} \
+                        location=${{ env.AZURE_LOCATION }} \
+                        securityContactEmail=${{ env.SECURITY_EMAIL }} \
+                        resourcePrefix=${{ env.RESOURCE_PREFIX }}
+          echo "✅ Bicep template validation completed"
 
-    - name: 'Create Security Alerts and Monitoring Rules'
-      run: |
-        echo "🚨 Creating security alerts..."
-        
-        # Get Log Analytics Workspace details
-        WORKSPACE_ID=$(az monitor log-analytics workspace show \
-          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --workspace-name "${{ env.RESOURCE_PREFIX }}-law-${{ env.ENVIRONMENT }}" \
-          --query "id" -o tsv)
-        
-        if [ -n "$WORKSPACE_ID" ]; then
-          # Create action group for security alerts
-          az monitor action-group create \
-            --name "security-alerts-ag" \
+      - name: "Preview Deployment (What-If)"
+        if: ${{ !github.event.inputs.force_deploy }}
+        run: |
+          echo "📋 Running deployment preview..."
+          az deployment sub what-if \
+            --location ${{ env.AZURE_LOCATION }} \
+            --template-file infra/main.bicep \
+            --parameters environmentName=${{ env.ENVIRONMENT }} \
+                        location=${{ env.AZURE_LOCATION }} \
+                        securityContactEmail=${{ env.SECURITY_EMAIL }} \
+                        resourcePrefix=${{ env.RESOURCE_PREFIX }}
+
+      - name: "Deploy Azure Security Infrastructure"
+        run: |
+          echo "🚀 Deploying security hardened infrastructure..."
+          az deployment sub create \
+            --name "security-deployment-$(date +%Y%m%d-%H%M%S)" \
+            --location ${{ env.AZURE_LOCATION }} \
+            --template-file infra/main.bicep \
+            --parameters environmentName=${{ env.ENVIRONMENT }} \
+                        location=${{ env.AZURE_LOCATION }} \
+                        securityContactEmail=${{ env.SECURITY_EMAIL }} \
+                        resourcePrefix=${{ env.RESOURCE_PREFIX }} \
+            --confirm-with-what-if
+          echo "✅ Infrastructure deployment completed"
+
+      - name: "Enable Microsoft Defender for Cloud - All Services"
+        run: |
+          echo "🛡️ Enabling Microsoft Defender for all services..."
+
+          # Enable Defender for Virtual Machines (P2 - Enhanced)
+          az security pricing create --name VirtualMachines --tier Standard
+
+          # Enable Defender for Storage (V2)
+          az security pricing create --name StorageAccounts --tier Standard
+
+          # Enable Defender for Key Vault
+          az security pricing create --name KeyVaults --tier Standard
+
+          # Enable Defender for Resource Manager
+          az security pricing create --name Arm --tier Standard
+
+          # Enable Defender for DNS
+          az security pricing create --name Dns --tier Standard
+
+          # Enable Defender for Container Registries
+          az security pricing create --name ContainerRegistry --tier Standard
+
+          # Enable Defender for Kubernetes
+          az security pricing create --name KubernetesService --tier Standard
+
+          echo "✅ Microsoft Defender for Cloud enabled for all services"
+
+      - name: "Configure Security Center Auto-Provisioning"
+        run: |
+          echo "⚙️ Configuring Security Center auto-provisioning..."
+          az security auto-provisioning-setting update --name default --auto-provision on
+          echo "✅ Auto-provisioning enabled"
+
+      - name: "Configure Network Security - Restrict Public Access"
+        run: |
+          echo "🔐 Configuring network security restrictions..."
+
+          # Get storage account name (dynamically generated)
+          STORAGE_ACCOUNT_NAME=$(az storage account list \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-            --short-name "SecAlerts" \
-            --email-receivers name="SecurityTeam" email="${{ env.SECURITY_EMAIL }}"
-          
-          echo "✅ Security action group created"
-        fi
+            --query "[?starts_with(name, 'secbspsaprod')].name" -o tsv)
 
-    - name: 'Generate Security Compliance Report'
-      run: |
-        echo "📄 Generating security compliance report..."
-        
-        # Policy compliance summary
-        echo "=== AZURE POLICY COMPLIANCE ===" > security-report.txt
-        az policy state list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --query "length([?complianceState=='NonCompliant'])" >> security-report.txt
-        
-        # Security Center recommendations
-        echo "=== SECURITY CENTER RECOMMENDATIONS ===" >> security-report.txt
-        az security task list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --query "[].{Name:name,State:state,Severity:severity}" -o table >> security-report.txt
-        
-        # Defender for Cloud status
-        echo "=== DEFENDER FOR CLOUD STATUS ===" >> security-report.txt
-        az security pricing list --query "[].{Service:name,Tier:pricingTier}" -o table >> security-report.txt
-        
-        cat security-report.txt
+          if [ -n "$STORAGE_ACCOUNT_NAME" ]; then
+            # Disable public network access for storage account
+            az storage account update \
+              --name "$STORAGE_ACCOUNT_NAME" \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --public-network-access Disabled
+            echo "✅ Storage account public access disabled"
+          fi
 
-    - name: 'Verify Deployment Success'
-      run: |
-        echo "✅ SECURITY HARDENING DEPLOYMENT COMPLETED"
-        echo "🛡️ Microsoft Defender for Cloud: ENABLED"
-        echo "🔐 Network Public Access: DISABLED"
-        echo "🔑 Key Vault Protection: ENABLED"
-        echo "💾 Storage Account Security: ENABLED"
-        echo "📊 Diagnostic Logging: ENABLED"
-        echo "📋 Security Policies: ENFORCED"
-        echo "🚨 Security Monitoring: ACTIVE"
-        
-        echo ""
-        echo "🔍 Next steps:"
-        echo "1. Review security compliance report above"
-        echo "2. Verify all resources in Azure portal"
-        echo "3. Test private endpoint connectivity"
-        echo "4. Monitor security alerts and recommendations"
+          # Get Key Vault name
+          KEY_VAULT_NAME=$(az keyvault list \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "[0].name" -o tsv)
 
-    - name: 'Upload Security Report as Artifact'
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-compliance-report
-        path: security-report.txt
-        retention-days: 30
+          if [ -n "$KEY_VAULT_NAME" ]; then
+            # Disable public network access for Key Vault
+            az keyvault update \
+              --name "$KEY_VAULT_NAME" \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --public-network-access Disabled
+            echo "✅ Key Vault public access disabled"
+          fi
+
+      - name: "Verify Security Policies Assignment"
+        run: |
+          echo "📋 Verifying security policy assignments..."
+          az policy assignment list \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "[].{Name:name,PolicyDefinition:policyDefinitionId,EnforcementMode:enforcementMode}" \
+            --output table
+          echo "✅ Security policies verified"
+
+      - name: "Configure Diagnostic Settings and Monitoring"
+        run: |
+          echo "📊 Configuring diagnostic settings..."
+
+          # Get Log Analytics Workspace ID
+          WORKSPACE_ID=$(az monitor log-analytics workspace show \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --workspace-name "${{ env.RESOURCE_PREFIX }}-law-${{ env.ENVIRONMENT }}" \
+            --query "id" -o tsv)
+
+          if [ -n "$WORKSPACE_ID" ]; then
+            echo "Log Analytics Workspace ID: $WORKSPACE_ID"
+            
+            # Enable Activity Log diagnostic settings
+            az monitor diagnostic-settings subscription create \
+              --name "activity-logs-to-law" \
+              --location ${{ env.AZURE_LOCATION }} \
+              --workspace "$WORKSPACE_ID" \
+              --logs '[
+                {
+                  "category": "Administrative",
+                  "enabled": true
+                },
+                {
+                  "category": "Security", 
+                  "enabled": true
+                },
+                {
+                  "category": "Alert",
+                  "enabled": true
+                },
+                {
+                  "category": "Policy",
+                  "enabled": true
+                }
+              ]'
+            echo "✅ Activity Log diagnostic settings configured"
+          fi
+
+      - name: "Create Security Alerts and Monitoring Rules"
+        run: |
+          echo "🚨 Creating security alerts..."
+
+          # Get Log Analytics Workspace details
+          WORKSPACE_ID=$(az monitor log-analytics workspace show \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --workspace-name "${{ env.RESOURCE_PREFIX }}-law-${{ env.ENVIRONMENT }}" \
+            --query "id" -o tsv)
+
+          if [ -n "$WORKSPACE_ID" ]; then
+            # Create action group for security alerts
+            az monitor action-group create \
+              --name "security-alerts-ag" \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --short-name "SecAlerts" \
+              --email-receivers name="SecurityTeam" email="${{ env.SECURITY_EMAIL }}"
+            
+            echo "✅ Security action group created"
+          fi
+
+      - name: "Generate Security Compliance Report"
+        run: |
+          echo "📄 Generating security compliance report..."
+
+          # Policy compliance summary
+          echo "=== AZURE POLICY COMPLIANCE ===" > security-report.txt
+          az policy state list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "length([?complianceState=='NonCompliant'])" >> security-report.txt
+
+          # Security Center recommendations
+          echo "=== SECURITY CENTER RECOMMENDATIONS ===" >> security-report.txt
+          az security task list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "[].{Name:name,State:state,Severity:severity}" -o table >> security-report.txt
+
+          # Defender for Cloud status
+          echo "=== DEFENDER FOR CLOUD STATUS ===" >> security-report.txt
+          az security pricing list --query "[].{Service:name,Tier:pricingTier}" -o table >> security-report.txt
+
+          cat security-report.txt
+
+      - name: "Verify Deployment Success"
+        run: |
+          echo "✅ SECURITY HARDENING DEPLOYMENT COMPLETED"
+          echo "🛡️ Microsoft Defender for Cloud: ENABLED"
+          echo "🔐 Network Public Access: DISABLED"
+          echo "🔑 Key Vault Protection: ENABLED"
+          echo "💾 Storage Account Security: ENABLED"
+          echo "📊 Diagnostic Logging: ENABLED"
+          echo "📋 Security Policies: ENFORCED"
+          echo "🚨 Security Monitoring: ACTIVE"
+
+          echo ""
+          echo "🔍 Next steps:"
+          echo "1. Review security compliance report above"
+          echo "2. Verify all resources in Azure portal"
+          echo "3. Test private endpoint connectivity"
+          echo "4. Monitor security alerts and recommendations"
+
+      - name: "Upload Security Report as Artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-compliance-report
+          path: security-report.txt
+          retention-days: 30

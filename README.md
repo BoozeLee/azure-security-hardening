@@ -4,7 +4,7 @@
 
 [![CI Status](https://github.com/BoozeLee/azure-security-hardening/workflows/CI%20-%20Bicep%20Validation%20%26%20Security%20Scan/badge.svg)](https://github.com/BoozeLee/azure-security-hardening/actions)
 [![Security Scan](https://github.com/BoozeLee/azure-security-hardening/workflows/Release%20%26%20Package/badge.svg)](https://github.com/BoozeLee/azure-security-hardening/releases)
-[![License](https://img.shields.io/badge/License-Commercial-red.svg)](mailto:kiliaan@bakerstreetproject221b.store)
+[![License](https://img.shields.io/badge/License-Commercial-red.svg)](mailto:kiliaan@bakerstreetproject.com)
 
 ## 💰 Commercial Solution - Proven ROI
 
@@ -36,7 +36,7 @@
 - 90 days dedicated support
 - Implementation consulting
 
-📧 **Purchase:** [kiliaan@bakerstreetproject221b.store](mailto:kiliaan@bakerstreetproject221b.store)
+📧 **Purchase:** [kiliaan@bakerstreetproject.com](mailto:kiliaan@bakerstreetproject.com)
 
 ## 📋 What You Get  
 
@@ -153,11 +153,11 @@ azure-security-hardening/
 ## 📞 Contact & Sales
 
 ### **Purchase Inquiry**
-📧 **Email:** [kiliaan@bakerstreetproject221b.store](mailto:kiliaan@bakerstreetproject221b.store)  
+📧 **Email:** [kiliaan@bakerstreetproject.com](mailto:kiliaan@bakerstreetproject.com)  
 📋 **Subject:** Azure Security Hardening Purchase  
 
 ### **Technical Demo**
-🎥 **Schedule 30-min demo:** [Calendar Link](mailto:kiliaan@bakerstreetproject221b.store?subject=Demo%20Request)  
+🎥 **Schedule 30-min demo:** [Calendar Link](mailto:kiliaan@bakerstreetproject.com?subject=Demo%20Request)  
 🔧 **Technical questions:** Include "TECHNICAL" in subject  
 
 ### **Enterprise Consulting**
@@ -192,7 +192,9 @@ azure-security-hardening/
 ---
 
 **Ready to secure your Azure infrastructure?**  
-**Contact us today: [kiliaan@bakerstreetproject221b.store](mailto:kiliaan@bakerstreetproject221b.store)**
+**Contact us today: [kiliaan@bakerstreetproject.com](mailto:kiliaan@bakerstreetproject.com)**  
+**Support:** [support@bakerstreetproject.com](mailto:support@bakerstreetproject.com)  
+**Payment / Stripe:** [support+stripe@bakerstreetproject.com](mailto:support+stripe@bakerstreetproject.com)
 ├── .gitattributes             # Git file handling configuration
 └── README.md                  # This file
 ```
@@ -244,7 +246,7 @@ azure-security-hardening/
    az deployment sub validate \
      --location westeurope \
      --template-file infra/main.bicep \
-     --parameters environmentName=prod securityContactEmail=kiliaan@bakerstreetproject221b.store
+   --parameters environmentName=prod securityContactEmail=kiliaan@bakerstreetproject.com
    ```
 
 3. **Deploy Infrastructure**:
@@ -253,7 +255,7 @@ azure-security-hardening/
      --name "security-hardening-$(date +%Y%m%d-%H%M%S)" \
      --location westeurope \
      --template-file infra/main.bicep \
-     --parameters environmentName=prod securityContactEmail=kiliaan@bakerstreetproject221b.store
+   --parameters environmentName=prod securityContactEmail=kiliaan@bakerstreetproject.com
    ```
 
 ## 🔧 GitHub Copilot Configuration
@@ -304,7 +306,8 @@ When contributing to this repository:
 ## 📞 Support
 
 For questions or issues:
-- **Owner**: kiliaan@bakerstreetproject221b.store
+- **Owner**: kiliaan@bakerstreetproject.com
+- **Support**: support@bakerstreetproject.com
 - **GitHub Issues**: Use repository issues for tracking
 - **Security Concerns**: Contact owner directly for security-related issues
 

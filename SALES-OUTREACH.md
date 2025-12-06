@@ -20,7 +20,7 @@ Would you like a 15-minute demo showing the difference between DIY Azure securit
 
 Best,
 Kiliaan
-kiliaan@bakerstreetproject221b.store
+kiliaan@bakerstreetproject.com
 
 ---
 
@@ -50,7 +50,7 @@ Would you like to see how this compares to your current security approach?
 Regards,
 Kiliaan Derks
 Azure Security Architect
-kiliaan@bakerstreetproject221b.store
+kiliaan@bakerstreetproject.com
 
 ---
 

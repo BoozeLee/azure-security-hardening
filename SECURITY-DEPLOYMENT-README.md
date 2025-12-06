@@ -57,7 +57,7 @@ Before deployment, ensure you have:
 After deployment completes:
 
 1. **Review Security Report** - Check compliance status
-2. **Monitor Alerts** - Security notifications sent to kiliaan@bakerstreetproject221b.store
+2. **Monitor Alerts** - Security notifications sent to kiliaan@bakerstreetproject.com
 3. **Test Connectivity** - Verify private endpoint access
 4. **Regular Reviews** - Monitor Azure Security Center recommendations
 

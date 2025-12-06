@@ -80,7 +80,7 @@ jobs:
           ✅ Money-back guarantee (30 days)
 
           SUPPORT CONTACT:
-          kiliaan@bakerstreetproject221b.store
+          support+stripe@bakerstreetproject.com
           Subject: [SUPPORT-${{ steps.payment.outputs.payment_id }}]
           EOF
 
@@ -108,7 +108,7 @@ jobs:
           ✅ Custom compliance consultation
 
           ENTERPRISE SUPPORT:
-          kiliaan@bakerstreetproject221b.store
+          support@bakerstreetproject.com
           Subject: [ENTERPRISE-${{ steps.payment.outputs.payment_id }}]
           Response SLA: 4-24 hours
           EOF
@@ -144,7 +144,7 @@ jobs:
 
           ## 🛡️ Support Information
 
-          Email: kiliaan@bakerstreetproject221b.store
+          Email: support@bakerstreetproject.com
           Subject: [SUPPORT-${{ steps.payment.outputs.payment_id }}]
 
           Response time: 24-48 hours
@@ -165,7 +165,7 @@ jobs:
           Best regards,
           Kiliaan Derks
           Azure Security Architect
-          kiliaan@bakerstreetproject221b.store
+          support@bakerstreetproject.com
           EOF
 
           echo "📧 Email content generated for ${{ steps.payment.outputs.email }}"
@@ -185,7 +185,9 @@ jobs:
 
       - name: "Notify Admin (secure)"
         run: |
-          echo "New customer ${{ steps.payment.outputs.email }} purchased ${{ steps.payment.outputs.product }}. Uploaded customer artifact customers-${{ steps.payment.outputs.payment_id }}." | gh issue create --title "New customer purchased" --body - || true
+          EMAIL="${{ steps.payment.outputs.email }}"
+          MASKED_EMAIL=$(echo "$EMAIL" | sed -E 's/^(.).+(@.*)$/\1***\2/')
+          echo "New customer $MASKED_EMAIL purchased ${{ steps.payment.outputs.product }}. Uploaded customer artifact customers-${{ steps.payment.outputs.payment_id }}." | gh issue create --title "New customer purchased" --body - || true
 
       - name: "Upload License Package"
         uses: actions/upload-artifact@v4

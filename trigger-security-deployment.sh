@@ -1,9 +1,9 @@
 #!/bin/bash
 # Azure Security Hardening - Manual GitHub Actions Trigger
-# High-threat environment protection for kiliaan@bakerstreetproject221b.store
+# High-threat environment protection for kiliaan@bakerstreetproject.com
 
 echo "🚨 URGENT: Triggering Azure Security Hardening via GitHub Actions"
-echo "📧 Security Contact: kiliaan@bakerstreetproject221b.store"
+echo "📧 Security Contact: kiliaan@bakerstreetproject.com"
 echo "🌍 Region: West Europe"
 echo "🔒 Threat Level: HIGH"
 echo ""

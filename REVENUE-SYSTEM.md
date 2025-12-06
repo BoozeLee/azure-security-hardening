@@ -93,6 +93,8 @@ jobs:
 4. **Welcome email** with setup instructions
 5. **30-day follow-up** for support
 
+Note: Do not store customer PII (emails, payment IDs) in your git repository. Use a secure external store (Azure Cosmos DB, Azure Table, or an encrypted database) or upload artifacts securely and then delete them. We added a GitHub Action to avoid committing `customers.json` into the repo and to upload it as an artifact instead.
+
 ## 💎 Revenue Optimization
 
 ### Pricing Psychology

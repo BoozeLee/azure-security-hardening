@@ -47,7 +47,7 @@ jobs:
           echo "💰 Full version available for $2,500/deployment"
           echo "🏢 Enterprise edition: $10,000/project"
           echo ""
-          echo "📧 Contact: kiliaan@bakerstreetproject221b.store"
+          echo "📧 Contact: kiliaan@bakerstreetproject.com"
           echo "🌐 GitHub: https://github.com/BoozeLee/azure-security-hardening"
           echo ""
           echo "🚀 To continue, you'll need the full license..."
@@ -85,12 +85,12 @@ jobs:
             location: location
             tags: {
               Demo: 'true'
-              Contact: 'kiliaan@bakerstreetproject221b.store'
+              Contact: 'kiliaan@bakerstreetproject.com'
               Purchase: 'https://github.com/BoozeLee/azure-security-hardening'
             }
           }
 
-          output message string = 'Demo completed. Contact kiliaan@bakerstreetproject221b.store for full version.'
+          output message string = 'Demo completed. Contact kiliaan@bakerstreetproject.com for full version.'
           EOF
 
           # Create sales page
@@ -125,7 +125,7 @@ jobs:
 
           ## 📞 Contact & Purchase
 
-          **Email:** kiliaan@bakerstreetproject221b.store
+          **Email:** kiliaan@bakerstreetproject.com
           **Subject:** Azure Security Hardening Purchase
 
           Include in your email:
@@ -165,7 +165,7 @@ jobs:
 
           **Prepared for:** [CLIENT NAME]
           **Date:** ${DATE}
-          **Prepared by:** Kiliaan Derks (kiliaan@bakerstreetproject221b.store)
+          **Prepared by:** Kiliaan Derks (kiliaan@bakerstreetproject.com)
 
           ## 🎯 Executive Summary
 
@@ -232,7 +232,7 @@ jobs:
           ## 📞 Contact Information
 
           **Kiliaan Derks**  
-          **Email:** kiliaan@bakerstreetproject221b.store  
+          **Email:** kiliaan@bakerstreetproject.com  
           **GitHub:** https://github.com/BoozeLee/azure-security-hardening  
 
           *Ready to secure your Azure infrastructure today?*
@@ -296,7 +296,7 @@ jobs:
 
           ## 📞 Your Dedicated Support
 
-          **Email:** kiliaan@bakerstreetproject221b.store
+          **Email:** kiliaan@bakerstreetproject.com
           **Subject Prefix:** [ENTERPRISE-SUPPORT]
 
           **Response Times:**
@@ -365,7 +365,7 @@ jobs:
             --parameters securityContactEmail=${ENTERPRISE_EMAIL:-"your-email@company.com"}
 
           echo "✅ Enterprise deployment completed!"
-          echo "📧 Need support? Email: kiliaan@bakerstreetproject221b.store"
+          echo "📧 Need support? Email: support@bakerstreetproject.com"
           EOF
 
           chmod +x enterprise-package/deploy-enterprise.sh

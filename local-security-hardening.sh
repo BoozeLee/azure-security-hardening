@@ -5,7 +5,7 @@
 set -e
 
 echo "🚨 URGENT: Implementing Local Security Hardening"
-echo "📧 Security Contact: kiliaan@bakerstreetproject221b.store"
+echo "📧 Security Contact: kiliaan@bakerstreetproject.com"
 echo "🔒 Threat Level: HIGH"
 echo ""
 
@@ -68,7 +68,7 @@ cat > /tmp/security_monitor.sh << 'EOF'
 # Security monitoring for high-threat environment
 
 LOG_FILE="/var/log/security-monitor.log"
-EMAIL="kiliaan@bakerstreetproject221b.store"
+EMAIL="kiliaan@bakerstreetproject.com"
 
 # Monitor failed login attempts
 FAILED_LOGINS=$(journalctl --since "1 hour ago" | grep -i "failed\|invalid" | wc -l)

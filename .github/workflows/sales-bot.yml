@@ -163,7 +163,7 @@ jobs:
           Best regards,
           Kiliaan Derks
           Azure Security Architect
-          kiliaan@bakerstreetproject221b.store
+          kiliaan@bakerstreetproject.com
 
           P.S. Used by 50+ companies like ${COMPANY} in ${INDUSTRY}
           EOF
@@ -258,10 +258,10 @@ jobs:
               echo "curl -X POST https://api.sendgrid.com/v3/mail/send \
                 -H 'Authorization: Bearer \$SENDGRID_API_KEY' \
                 -H 'Content-Type: application/json' \
-                -d '{
-                  \"personalizations\": [{\"to\": [{\"email\": \"$RECIPIENT\"}]}],
-                  \"from\": {\"email\": \"kiliaan@bakerstreetproject221b.store\"},
-                  \"subject\": \"$(head -1 $email_file | sed 's/Subject: //')\",
+                  -d '{
+                    \"personalizations\": [{\"to\": [{\"email\": \"$RECIPIENT\"}]}],
+                    \"from\": {\"email\": \"support@bakerstreetproject.com\"},
+                    \"subject\": \"$(head -1 $email_file | sed 's/Subject: //')\",
                   \"content\": [{\"type\": \"text/plain\", \"value\": \"$(tail -n +3 $email_file)\"}]
                 }'"
               

@@ -1,5 +1,5 @@
 // Azure Security Hardening - Simplified Working Template
-// High-threat environment protection for kiliaan@bakerstreetproject221b.store
+// High-threat environment protection for kiliaan@bakerstreetproject.com
 
 targetScope = 'subscription'
 
@@ -11,7 +11,7 @@ param environmentName string = 'prod'
 param location string = 'westeurope'
 
 @description('Your email for security alerts')
-param securityContactEmail string = 'kiliaan@bakerstreetproject221b.store'
+param securityContactEmail string = 'kiliaan@bakerstreetproject.com'
 
 @description('Resource prefix for naming')
 param resourcePrefix string = 'sec-bsp'
@@ -24,7 +24,7 @@ var workspaceName = '${resourcePrefix}-law-${environmentName}'
 
 var tags = {
   Environment: environmentName
-  Owner: 'kiliaan@bakerstreetproject221b.store'
+  Owner: 'kiliaan@bakerstreetproject.com'
   Purpose: 'Security-Hardened-Resources'
   ThreatLevel: 'High'
   Compliance: 'Required'

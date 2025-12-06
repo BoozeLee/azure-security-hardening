@@ -147,7 +147,7 @@
 Review the features and select the best fit for your organization
 
 ### 2. Contact for Purchase
-📧 **Email:** kiliaan@bakerstreetproject221b.store
+📧 **Email:** kiliaan@bakerstreetproject.com
 📋 **Subject:** Azure Security Hardening Purchase
 
 Include:
@@ -184,7 +184,7 @@ A: Yes, reseller programs available. Contact for details.
 
 **Contact us today for immediate licensing:**
 
-📧 **Email:** [kiliaan@bakerstreetproject221b.store](mailto:kiliaan@bakerstreetproject221b.store)
+📧 **Email:** [kiliaan@bakerstreetproject.com](mailto:kiliaan@bakerstreetproject.com)
 📋 **Subject:** Purchase Inquiry - [Your Company]
 
 **License delivered within 24 hours of payment**

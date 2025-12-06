@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "🚀 VISUAL STUDIO SUBSCRIPTION - AUTOMATED AZURE SECURITY DEPLOYMENT"
-echo "📧 Contact: kiliaan@bakerstreetproject221b.store" 
+echo "📧 Contact: kiliaan@bakerstreetproject.com" 
 echo "🌍 Region: West Europe"
 echo "🔒 Threat Level: MAXIMUM PROTECTION"
 echo ""
@@ -43,7 +43,7 @@ az deployment group create \
         keyVaultName="kv-sec$(date +%s | tail -c 6)" \
         storageAccountName="stsec$(date +%s | tail -c 6)" \
         logAnalyticsWorkspaceName="law-security" \
-        securityContactEmail="kiliaan@bakerstreetproject221b.store" \
+        securityContactEmail="kiliaan@bakerstreetproject.com" \
         location="$LOCATION"
 
 echo "🛡️ Enabling Microsoft Defender..."

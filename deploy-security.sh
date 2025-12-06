@@ -1,11 +1,11 @@
 #!/bin/bash
 # Azure Security Hardening - Immediate Deployment Script
-# High-threat environment protection for kiliaan@bakerstreetproject221b.store
+# High-threat environment protection for kiliaan@bakerstreetproject.com
 
 set -e  # Exit on any error
 
 echo "🚨 URGENT: Starting Azure Security Hardening Deployment"
-echo "📧 Security Contact: kiliaan@bakerstreetproject221b.store"
+echo "📧 Security Contact: kiliaan@bakerstreetproject.com"
 echo "🌍 Region: West Europe"
 echo "🔒 Threat Level: HIGH"
 echo ""
@@ -14,7 +14,7 @@ echo ""
 SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}"
 LOCATION="westeurope"
 RESOURCE_GROUP="sec-bsp-rg-prod"
-SECURITY_EMAIL="kiliaan@bakerstreetproject221b.store"
+SECURITY_EMAIL="kiliaan@bakerstreetproject.com"
 DEPLOYMENT_NAME="security-hardening-$(date +%Y%m%d-%H%M%S)"
 
 # Check Azure CLI installation

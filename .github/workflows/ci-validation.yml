@@ -121,7 +121,7 @@ jobs:
               --location westeurope \
               --template-file infra/main.bicep \
               --parameters environmentName=staging \
-              --parameters securityContactEmail=kiliaan@bakerstreetproject221b.store \
+              --parameters securityContactEmail=kiliaan@bakerstreetproject.com \
               --parameters resourcePrefix=sec-bsp-test || echo "What-if analysis completed with warnings"
           else
             echo "⚠️ Azure credentials not available - skipping what-if"

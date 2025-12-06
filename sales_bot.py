@@ -246,9 +246,9 @@ Most {lead['title']}s spend 6 months and $150K+ getting Azure security right. I 
 Interested in a 10-minute demo?
 
 Best regards,
-Kiliaan Derks
-Azure Security Architect
-kiliaan@bakerstreetproject221b.store
+                Kiliaan Derks
+                Azure Security Architect
+                kiliaan@bakerstreetproject.com
 
 P.S. Purchase link: https://buy.stripe.com/professional-edition"""
             },
@@ -299,7 +299,7 @@ Kiliaan"""
         
         data = {
             "personalizations": [{"to": [{"email": to_email, "name": lead_name}]}],
-            "from": {"email": "kiliaan@bakerstreetproject221b.store", "name": "Kiliaan Derks"},
+            "from": {"email": "kiliaan@bakerstreetproject.com", "name": "Kiliaan Derks"},
             "subject": subject,
             "content": [{"type": "text/plain", "value": body}]
         }

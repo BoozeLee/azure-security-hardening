@@ -169,3 +169,28 @@ curl -X GET "https://api.sendgrid.com/v3/stats" \
 ```
 
 **Bottom line: $150/month in API costs → $25K+/month in revenue = 16,500% ROI! 🚀💰**
+
+## Stripe Webhook Setup (Test + Production)
+
+1. Create a small webhook receiver in the repo (`stripe_webhook_server.py`) to validate Stripe event signatures and then call GitHub's repository dispatch API.
+2. Install dependencies locally:
+```bash
+pip install -r requirements.txt
+```
+3. Run locally with environment variables (test mode):
+```bash
+export STRIPE_SECRET_KEY='sk_test_your_key'
+export STRIPE_WEBHOOK_SECRET='whsec_your_webhook_secret'
+export GH_PAT='ghp_personal_access_token'
+export GITHUB_OWNER='BoozeLee'
+export GITHUB_REPO='azure-security-hardening'
+python3 stripe_webhook_server.py
+```
+4. Use Stripe CLI to forward events while testing:
+```bash
+stripe listen --forward-to http://localhost:5000/webhook
+stripe trigger checkout.session.completed
+```
+5. For production, host the webhook server (Azure Functions or a small container) and configure a Stripe webhook endpoint to call your public URL; store your `GH_PAT` in GitHub Secrets and `STRIPE_WEBHOOK_SECRET` as an environment variable in the host or in Key Vault.
+
+Note: Stripe webhooks must be verified on receipt; do NOT trust raw requests in production.

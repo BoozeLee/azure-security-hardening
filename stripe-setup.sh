@@ -8,7 +8,7 @@ echo ""
 
 echo "🚀 Step 1: Create Stripe Account"
 echo "1. Go to: https://stripe.com"
-echo "2. Sign up with: kiliaan@bakerstreetproject221b.store"
+echo "2. Sign up with: kiliaan@bakerstreetproject.com"
 echo "3. Complete business verification"
 echo ""
 
