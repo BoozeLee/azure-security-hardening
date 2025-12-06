@@ -1,4 +1,4 @@
-name: 'Release & Package'
+name: "Release & Package"
 
 on:
   push:
@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       version_type:
-        description: 'Version bump type'
+        description: "Version bump type"
         required: true
-        default: 'patch'
+        default: "patch"
         type: choice
         options:
           - patch
@@ -21,14 +21,14 @@ permissions:
 
 jobs:
   create-release:
-    name: 'Create Release Package'
+    name: "Create Release Package"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 'Get Version'
+      - name: "Get Version"
         id: version
         run: |
           DATE=$(date +%Y.%m.%d)
@@ -38,36 +38,36 @@ jobs:
           echo "date=$DATE" >> $GITHUB_OUTPUT
           echo "commit=$COMMIT" >> $GITHUB_OUTPUT
 
-      - name: 'Create Release Package'
+      - name: "Create Release Package"
         run: |
           mkdir -p release-package
-          
+
           # Copy core infrastructure
           cp -r infra/ release-package/
           cp auto-deploy-azure-security.sh release-package/
           cp deploy-*.sh release-package/
           cp local-security-hardening.sh release-package/
           cp *.md release-package/
-          
+
           # Create deployment guide
           cat > release-package/DEPLOYMENT-GUIDE.md << 'EOF'
           # 🛡️ Azure Security Hardening - Professional Edition
-          
+
           **Version:** ${{ steps.version.outputs.version }}
           **Build Date:** ${{ steps.version.outputs.date }}
-          
+
           ## 🚀 Quick Deployment
-          
+
           ### Prerequisites
           - Azure CLI installed and authenticated
           - Active Azure subscription with appropriate permissions
           - PowerShell or Bash terminal
-          
+
           ### One-Command Deployment
           ```bash
           ./auto-deploy-azure-security.sh
           ```
-          
+
           ### Manual Deployment
           ```bash
           az deployment sub create \
@@ -76,94 +76,94 @@ jobs:
             --parameters environmentName=prod \
             --parameters securityContactEmail=YOUR-EMAIL
           ```
-          
+
           ## 🛡️ Security Features Included
-          
+
           ✅ **Zero Trust Architecture**
           - All resources behind private endpoints
           - No public internet access
           - Network micro-segmentation
-          
+
           ✅ **Advanced Encryption**
           - Customer-managed keys (CMK)
           - Encryption at rest and in transit
           - Hardware Security Module (HSM) backing
-          
+
           ✅ **Comprehensive Monitoring**
           - Azure Defender for all services
           - Centralized logging and alerting
           - Security dashboard and reports
-          
+
           ✅ **Compliance Ready**
           - SOC 2 Type II compatible
           - GDPR privacy controls
           - ISO 27001 security standards
-          
+
           ## 💰 Enterprise Support
-          
+
           Need customization or support? Contact: kiliaan@bakerstreetproject221b.store
-          
+
           - Custom security policies
           - Multi-environment setup
           - Compliance consulting
           - 24/7 monitoring setup
           EOF
-          
+
           # Create pricing sheet
           cat > release-package/PRICING.md << 'EOF'
           # 💰 Azure Security Hardening - Pricing
-          
+
           ## 🆓 Open Source Edition (Free)
           - Basic Bicep templates
           - Standard security configurations
           - Community support via GitHub Issues
-          
+
           ## 🏢 Professional Edition ($2,500/deployment)
           - Complete security hardening templates
           - Custom policy configurations
           - Email support for 30 days
           - Deployment validation and testing
-          
+
           ## 🏆 Enterprise Edition ($10,000/project)
           - Multi-environment deployment
           - Custom compliance frameworks
           - Security assessment and recommendations
           - 90 days of support and monitoring setup
           - Dedicated consultant for implementation
-          
+
           ## 🤝 Consulting Services
           - Security architecture review: $500/hour
           - Custom compliance implementation: $1,500/day
           - Zero trust migration: Starting at $25,000
-          
+
           Contact: kiliaan@bakerstreetproject221b.store
           EOF
-          
+
           # Package everything
           cd release-package
           tar -czf ../azure-security-hardening-${{ steps.version.outputs.version }}.tar.gz .
           cd ..
-          
+
           # Create checksums
           sha256sum azure-security-hardening-${{ steps.version.outputs.version }}.tar.gz > checksums.txt
 
-      - name: 'Create GitHub Release'
+      - name: "Create GitHub Release"
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: "Azure Security Hardening ${{ steps.version.outputs.version }}"
           body: |
             ## 🛡️ Azure Security Hardening - Professional Release
-            
+
             **Build:** ${{ steps.version.outputs.commit }}
             **Date:** ${{ steps.version.outputs.date }}
-            
+
             ### 🚀 What's New
             - Enterprise-grade security templates
             - Automated compliance validation
             - Zero Trust architecture implementation
             - Professional packaging and documentation
-            
+
             ### 🛡️ Security Features
             - ✅ Zero Public Access - All resources protected
             - ✅ Customer-Managed Encryption - HSM-backed keys
@@ -171,14 +171,14 @@ jobs:
             - ✅ Advanced Threat Protection - Defender for all services
             - ✅ Comprehensive Monitoring - 90-day retention logging
             - ✅ Compliance Ready - SOC2, GDPR, ISO27001
-            
+
             ### 📦 Package Contents
             - Complete Bicep infrastructure templates
             - Automated deployment scripts
             - Security validation workflows
             - Professional documentation
             - Pricing and support information
-            
+
             ### 🚀 Quick Deploy
             ```bash
             wget https://github.com/BoozeLee/azure-security-hardening/releases/download/${{ steps.version.outputs.version }}/azure-security-hardening-${{ steps.version.outputs.version }}.tar.gz
@@ -186,12 +186,12 @@ jobs:
             cd release-package
             ./auto-deploy-azure-security.sh
             ```
-            
+
             ### 💰 Commercial Licensing
             - Professional Edition: $2,500/deployment
             - Enterprise Edition: $10,000/project
             - Custom consulting available
-            
+
             **Contact:** kiliaan@bakerstreetproject221b.store
           files: |
             azure-security-hardening-${{ steps.version.outputs.version }}.tar.gz
@@ -201,11 +201,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 'Update README with Latest Release'
+      - name: "Update README with Latest Release"
         run: |
           # Update README with download link
           sed -i "s|Latest Release: .*|Latest Release: [${{ steps.version.outputs.version }}](https://github.com/BoozeLee/azure-security-hardening/releases/tag/${{ steps.version.outputs.version }})|" README.md || true
-          
+
           # Commit if changes
           if git diff --quiet README.md; then
             echo "No README changes needed"

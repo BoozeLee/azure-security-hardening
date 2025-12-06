@@ -1,0 +1,31 @@
+{
+  "lenses": {
+    "0": {
+      "order": 0,
+      "parts": {
+        "0": {
+          "position": { "x": 0, "y": 0, "rowSpan": 2, "colSpan": 3 },
+          "metadata": {
+            "type": "Extension/HubsExtension/ResourceGroupOverviewBlade",
+            "inputs": {
+              "resourceGroup": "/subscriptions/f57d4e9d-bb1f-4563-82e4-ccbb42852d8e/resourceGroups/rg-emergency-security"
+            }
+          }
+        },
+        "1": {
+          "position": { "x": 3, "y": 0, "rowSpan": 2, "colSpan": 3 },
+          "metadata": {
+            "type": "Extension/HubsExtension/ResourceGraphQueryBlade",
+            "inputs": {
+              "query": "Resources | where resourceGroup == 'rg-emergency-security' | project name, type, location"
+            }
+          }
+        }
+      }
+    }
+  },
+  "metadata": {
+    "model": "default"
+  },
+  "isLocked": false
+}

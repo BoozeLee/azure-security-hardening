@@ -1,19 +1,19 @@
-name: 'Marketplace & Sales Pipeline'
+name: "Marketplace & Sales Pipeline"
 
 on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'Marketplace action'
+        description: "Marketplace action"
         required: true
-        default: 'generate_demo'
+        default: "generate_demo"
         type: choice
         options:
           - generate_demo
           - create_proposal
           - package_enterprise
   schedule:
-    - cron: '0 9 * * 1'  # Weekly Monday 9AM
+    - cron: "0 9 * * 1" # Weekly Monday 9AM
 
 permissions:
   contents: write
@@ -21,16 +21,16 @@ permissions:
 
 jobs:
   generate-demo:
-    name: 'Generate Demo Environment'
+    name: "Generate Demo Environment"
     runs-on: ubuntu-latest
     if: github.event.inputs.action == 'generate_demo' || github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@v4
 
-      - name: 'Create Demo Package'
+      - name: "Create Demo Package"
         run: |
           mkdir -p demo-package
-          
+
           # Create simplified demo version
           cat > demo-package/demo-deploy.sh << 'EOF'
           #!/bin/bash
@@ -52,7 +52,7 @@ jobs:
           echo ""
           echo "🚀 To continue, you'll need the full license..."
           read -p "Press Enter to continue with demo deployment..."
-          
+
           # Demo deployment (read-only what-if)
           if command -v az >/dev/null 2>&1; then
             echo "🔍 Running demo what-if analysis..."
@@ -66,19 +66,19 @@ jobs:
             echo "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash"
           fi
           EOF
-          
+
           chmod +x demo-package/demo-deploy.sh
-          
+
           # Create demo bicep (limited features)
           cat > demo-package/main-demo.bicep << 'EOF'
           // Azure Security Hardening - DEMO VERSION
           // Limited features - Full version available for purchase
           targetScope = 'subscription'
-          
+
           param environmentName string = 'demo'
           param resourcePrefix string = 'demo-sec'
           param location string = 'westeurope'
-          
+
           // Demo resource group only
           resource demoRg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
             name: '${resourcePrefix}-rg-${environmentName}'
@@ -89,16 +89,16 @@ jobs:
               Purchase: 'https://github.com/BoozeLee/azure-security-hardening'
             }
           }
-          
+
           output message string = 'Demo completed. Contact kiliaan@bakerstreetproject221b.store for full version.'
           EOF
-          
+
           # Create sales page
           cat > demo-package/PURCHASE.md << 'EOF'
           # 💰 Purchase Azure Security Hardening
-          
+
           ## 🎯 What You Get
-          
+
           ### 🏢 Professional Edition - $2,500
           - Complete Bicep infrastructure templates
           - Zero Trust architecture implementation
@@ -106,7 +106,7 @@ jobs:
           - Network isolation and security groups
           - Azure Defender configuration
           - 30 days email support
-          
+
           ### 🏆 Enterprise Edition - $10,000
           - Everything in Professional
           - Multi-environment deployment
@@ -114,215 +114,215 @@ jobs:
           - Security assessment and recommendations  
           - 90 days dedicated support
           - Implementation consulting
-          
+
           ## 🤝 Why Choose This Solution?
-          
+
           ✅ **Battle-Tested**: Used in production high-threat environments
           ✅ **Compliance-Ready**: SOC2, GDPR, ISO27001 compatible
           ✅ **Expert-Built**: Designed by security professionals
           ✅ **Time-Saving**: Deploy in minutes, not weeks
           ✅ **Cost-Effective**: Avoid $50K+ security consulting fees
-          
+
           ## 📞 Contact & Purchase
-          
+
           **Email:** kiliaan@bakerstreetproject221b.store
           **Subject:** Azure Security Hardening Purchase
-          
+
           Include in your email:
           - Company name and size
           - Deployment environment (dev/prod)
           - Timeline requirements
           - Compliance needs
-          
+
           ## 💳 Payment Options
           - Bank transfer (preferred)
           - PayPal Business
           - Cryptocurrency (Bitcoin, Ethereum)
-          
+
           **License delivery within 24 hours of payment**
           EOF
 
-      - name: 'Upload Demo Package'
+      - name: "Upload Demo Package"
         uses: actions/upload-artifact@v4
         with:
           name: azure-security-demo
           path: demo-package/
 
   create-proposal:
-    name: 'Generate Sales Proposal'
+    name: "Generate Sales Proposal"
     runs-on: ubuntu-latest
     if: github.event.inputs.action == 'create_proposal'
     steps:
       - uses: actions/checkout@v4
 
-      - name: 'Create Sales Proposal'
+      - name: "Create Sales Proposal"
         run: |
           mkdir -p proposals
           DATE=$(date +"%Y-%m-%d")
-          
+
           cat > proposals/azure-security-proposal-${DATE}.md << 'EOF'
           # 🛡️ Azure Security Hardening - Enterprise Proposal
-          
+
           **Prepared for:** [CLIENT NAME]
           **Date:** ${DATE}
           **Prepared by:** Kiliaan Derks (kiliaan@bakerstreetproject221b.store)
-          
+
           ## 🎯 Executive Summary
-          
+
           Your organization requires enterprise-grade security for Azure infrastructure. Our Azure Security Hardening solution provides military-grade protection with zero public exposure, customer-managed encryption, and comprehensive threat detection.
-          
+
           ## 🔍 Current Challenge
-          
+
           - **83%** of data breaches involve cloud misconfigurations
           - **Average cost** of cloud security incident: $4.45M
           - **Time to detect** breach: 280 days average
           - **Manual setup** of security: 3-6 months minimum
-          
+
           ## 🛡️ Our Solution
-          
+
           ### Immediate Benefits
           - ⚡ **Deploy in 15 minutes** vs 3-6 months manual
           - 🔒 **Zero Trust architecture** - no public endpoints
           - 🔐 **Military-grade encryption** - HSM-backed keys
           - 📊 **Real-time monitoring** - advanced threat detection
-          
+
           ### Technical Implementation
           - Infrastructure as Code (Bicep) templates
           - Automated compliance validation
           - Network micro-segmentation
           - Advanced logging and alerting
           - Policy-driven security enforcement
-          
+
           ## 💰 Investment & ROI
-          
+
           ### Professional Edition: $2,500
           **ROI in first month:**
           - Security consultant savings: $15,000+
           - Faster deployment: $25,000+ time savings
           - Reduced breach risk: Priceless
-          
+
           ### Enterprise Edition: $10,000  
           **Additional value:**
           - Multi-environment deployment
           - Custom compliance frameworks
           - 90 days dedicated support
           - Implementation consulting
-          
+
           ### Cost Comparison
           | Approach | Cost | Timeline | Risk |
           |----------|------|----------|------|
           | Manual Setup | $50K+ | 3-6 months | High |
           | Security Consultants | $100K+ | 2-4 months | Medium |
           | **Our Solution** | **$2.5K-10K** | **15 minutes** | **Minimal** |
-          
+
           ## 📈 Implementation Timeline
-          
+
           - **Day 1:** Purchase and license delivery
           - **Day 1-2:** Initial deployment and validation
           - **Week 1:** Security assessment and tuning
           - **Week 2-4:** Team training and handover
-          
+
           ## 🤝 Next Steps
-          
+
           1. **Review** this proposal with your security team
           2. **Schedule** a 30-minute technical demo call
           3. **Approve** investment and timeline
           4. **Deploy** within 24 hours of approval
-          
+
           ## 📞 Contact Information
-          
+
           **Kiliaan Derks**  
           **Email:** kiliaan@bakerstreetproject221b.store  
           **GitHub:** https://github.com/BoozeLee/azure-security-hardening  
-          
+
           *Ready to secure your Azure infrastructure today?*
           EOF
 
-      - name: 'Upload Proposal'
+      - name: "Upload Proposal"
         uses: actions/upload-artifact@v4
         with:
           name: sales-proposal
           path: proposals/
 
   package-enterprise:
-    name: 'Package Enterprise Edition'
+    name: "Package Enterprise Edition"
     runs-on: ubuntu-latest
     if: github.event.inputs.action == 'package_enterprise'
     steps:
       - uses: actions/checkout@v4
 
-      - name: 'Create Enterprise Package'
+      - name: "Create Enterprise Package"
         run: |
           mkdir -p enterprise-package
-          
+
           # Copy all infrastructure
           cp -r infra/ enterprise-package/
           cp -r .github/ enterprise-package/
           cp *.sh enterprise-package/
           cp *.md enterprise-package/
-          
+
           # Create enterprise-specific files
           cat > enterprise-package/ENTERPRISE-SETUP.md << 'EOF'
           # 🏆 Azure Security Hardening - Enterprise Edition
-          
+
           Thank you for purchasing the Enterprise Edition!
-          
+
           ## 🚀 Included Features
-          
+
           ✅ **Complete Infrastructure Templates**
           - Zero Trust architecture
           - Customer-managed encryption
           - Network isolation
           - Advanced monitoring
           - Compliance frameworks
-          
+
           ✅ **Multi-Environment Support**
           - Development environment
           - Staging environment  
           - Production environment
           - DR/backup environment
-          
+
           ✅ **Enterprise Integrations**
           - Azure AD/Entra ID integration
           - Microsoft 365 security
           - On-premises hybrid connectivity
           - Third-party SIEM integration
-          
+
           ✅ **90 Days Premium Support**
           - Direct email support
           - Architecture review calls
           - Security assessment
           - Implementation guidance
-          
+
           ## 📞 Your Dedicated Support
-          
+
           **Email:** kiliaan@bakerstreetproject221b.store
           **Subject Prefix:** [ENTERPRISE-SUPPORT]
-          
+
           **Response Times:**
           - Critical issues: 4 hours
           - General questions: 24 hours
           - Architecture reviews: 48 hours
-          
+
           ## 🎯 Implementation Checklist
-          
+
           - [ ] Review included templates
           - [ ] Customize for your environment
           - [ ] Run initial deployment
           - [ ] Schedule architecture review call
           - [ ] Configure monitoring and alerting
           - [ ] Team training session
-          
+
           Ready to get started? Email us!
           EOF
-          
+
           # Create enterprise deployment script
           cat > enterprise-package/deploy-enterprise.sh << 'EOF'
           #!/bin/bash
           # Azure Security Hardening - Enterprise Edition Deployment
-          
+
           set -e
-          
+
           echo "🏆 ENTERPRISE EDITION DEPLOYMENT"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🎯 Zero Trust Architecture"
@@ -332,7 +332,7 @@ jobs:
           echo "🤝 90 Days Premium Support"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
-          
+
           # Environment selection
           echo "🌍 Select deployment environment:"
           echo "1) Development"
@@ -340,7 +340,7 @@ jobs:
           echo "3) Production"
           echo "4) All environments"
           read -p "Choice [1-4]: " env_choice
-          
+
           case $env_choice in
             1) ENVIRONMENT="dev" ;;
             2) ENVIRONMENT="staging" ;;
@@ -354,7 +354,7 @@ jobs:
               ;;
             *) echo "❌ Invalid choice"; exit 1 ;;
           esac
-          
+
           # Deploy
           echo "🚀 Deploying to $ENVIRONMENT environment..."
           az deployment sub create \
@@ -363,14 +363,14 @@ jobs:
             --parameters environmentName=$ENVIRONMENT \
             --parameters resourcePrefix=ent-sec \
             --parameters securityContactEmail=${ENTERPRISE_EMAIL:-"your-email@company.com"}
-          
+
           echo "✅ Enterprise deployment completed!"
           echo "📧 Need support? Email: kiliaan@bakerstreetproject221b.store"
           EOF
-          
+
           chmod +x enterprise-package/deploy-enterprise.sh
 
-      - name: 'Upload Enterprise Package'
+      - name: "Upload Enterprise Package"
         uses: actions/upload-artifact@v4
         with:
           name: azure-security-enterprise
