@@ -301,7 +301,7 @@ jobs:
       - name: "Commit Campaign Data"
         run: |
           git config user.name "sales-bot"
-          git config user.email "sales@bakerstreetproject221b.store"
+          git config user.email "sales@bakerstreetproject.com"
 
           git add leads.json email_log.txt campaign_stats.json
           git commit -m "🤖 Sales Bot: ${{ steps.campaign.outputs.campaign_type }} campaign - ${{ steps.campaign.outputs.target_count }} emails sent"

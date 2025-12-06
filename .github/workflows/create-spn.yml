@@ -1,0 +1,62 @@
+name: Create Service Principal & Certificate
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: "Application (SP) name"
+        required: true
+      keyvault_name:
+        description: "Optional KeyVault name to import cert and store password"
+        required: false
+      cert_base_name:
+        description: "Optional canonical cert base name to use in KeyVault (no timestamp)"
+        required: false
+      store_password_in_kv:
+        description: "Whether to store the PFX password as secret in KeyVault (true/false)"
+        required: false
+        default: "true"
+      assign_kv_access_policy:
+        description: "Whether to assign Key Vault access policy for the created SP (requires elevated permissions)"
+        required: false
+        default: "false"
+      store_app_credentials_in_kv:
+        description: "Store app_credentials.json as KeyVault secret (true/false)"
+        required: false
+        default: "false"
+      export_password_to_file:
+        description: "Write PFX password to the app credentials file and outputs (not recommended)"
+        required: false
+        default: "false"
+
+jobs:
+  create-sp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Run create SP script
+        env:
+          EXPORT_PASSWORD_TO_FILE: ${{ inputs.export_password_to_file }}
+          STORE_PASSWORD_IN_KEYVAULT: ${{ inputs.store_password_in_kv }}
+          ASSIGN_KEYVAULT_ACCESS_POLICY: ${{ inputs.assign_kv_access_policy }}
+          STORE_APP_CREDENTIALS_IN_KEYVAULT: ${{ inputs.store_app_credentials_in_kv }}
+        run: |
+          chmod +x ./azure-sp-create.sh
+          ./azure-sp-create.sh "${{ inputs.app_name }}" "${{ inputs.keyvault_name }}" "${{ inputs.cert_base_name }}"
+
+      - name: Print app credentials JSON (safe only if not exporting password)
+        if: ${{ inputs.export_password_to_file == 'true' }}
+        run: |
+          cat ./app_credentials.json
+
+      - name: Output created app details
+        run: |
+          if [ -f ./app_credentials.json ]; then
+            cat ./app_credentials.json
+          fi

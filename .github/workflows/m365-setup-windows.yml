@@ -1,0 +1,50 @@
+name: M365 Setup - Windows Runner (PFX import demo)
+
+on:
+  workflow_dispatch:
+    inputs:
+      user_principal_name:
+        description: "UPN for the new mailbox"
+        required: true
+      display_name:
+        description: "Display name for the new account"
+        required: true
+      keyvault_name:
+        description: "KeyVault to fetch the certificate from"
+        required: true
+      sp_app_name:
+        description: "SP App name used in KeyVault secret naming"
+        required: true
+
+jobs:
+  setup-m365:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install PowerShell modules
+        shell: pwsh
+        run: |
+          Install-Module -Name ExchangeOnlineManagement -Force -Scope CurrentUser -AllowClobber
+          Install-Module -Name Microsoft.Graph -Force -Scope CurrentUser -AllowClobber
+
+      - name: Run m365 full setup (Certificate auth via KeyVault)
+        shell: pwsh
+        env:
+          KEY_VAULT_NAME: ${{ inputs.keyvault_name }}
+          SP_APP_NAME: ${{ inputs.sp_app_name }}
+          SP_CLIENT_ID: ${{ secrets.SP_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: |
+          pwsh -c './m365-full-setup.ps1 -AuthMode Certificate -SPClientId $env:SP_CLIENT_ID -SPTenantId $env:AZURE_TENANT_ID -SPAppName $env:SP_APP_NAME -KeyVaultName $env:KEY_VAULT_NAME -UserPrincipalName "${{ inputs.user_principal_name }}" -DisplayName "${{ inputs.display_name }}"'
+
+      - name: Validate mailbox
+        shell: pwsh
+        run: |
+          pwsh -c 'Get-Mailbox -Identity "${{ inputs.user_principal_name }}" | Format-List DisplayName,PrimarySmtpAddress,EmailAddresses'

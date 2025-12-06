@@ -207,6 +207,80 @@ azure-security-hardening/
 - Azure Bicep CLI
 - Proper Azure permissions (Contributor + Security Admin)
 
+### Optional: Create an Azure AD App + Certificate for automation (non-interactive)
+If you want to run automation non-interactively (recommended), create a Service Principal with a certificate:
+
+```bash
+# Create an app and certificate and optionally import the PFX into Key Vault
+./azure-sp-create.sh my-automation-app my-keyvault
+# Using a KeyVault-backed certificate (no local PFX):
+```bash
+# Create and bind a KeyVault-generated certificate to the app (KeyVault will generate and store cert)
+USE_KEYVAULT_CERT=true ./azure-sp-create.sh my-automation-app myKeyVault my-automation-app-cert
+```
+
+Note: By default, the script will attempt to export the PFX when KeyVault allows export; otherwise the script will attach the KeyVault certificate to the app without exporting the PFX.
+# GitHub Actions example: non-interactive creation and Key Vault import
+Use the provided workflow: `.github/workflows/create-spn.yml` for a secure way to run this creation in CI.
+
+An example workflow configuration (inputs) would look like:
+```yaml
+on:
+   workflow_dispatch:
+      inputs:
+         app_name: my-automation-app
+         keyvault_name: myKeyVault
+         cert_base_name: my-automation-app-cert
+         store_password_in_kv: 'true'
+         assign_kv_access_policy: 'true'
+         store_app_credentials_in_kv: 'true'
+```
+
+Standard Key Vault names used by the scripts:
+- Certificate Name (Key Vault certificate resource): `spn-<appName>-cert` (or the `cert_base_name` you provide)
+- Password secret: `spn-<appName>-pfx-password`
+- Certificate name secret: `spn-<appName>-cert-name` (the actual imported cert name used in Key Vault)
+
+When using `m365-full-setup.ps1` in non-interactive mode with the `Certificate` AuthMode, you can pass `-SPAppName` and `-KeyVaultName` and the script will attempt to fetch the certificate and password from Key Vault using the standard names above.
+
+### Example: Running `m365-full-setup.ps1` in CI (GitHub Actions)
+
+This example demonstrates how to run `m365-full-setup.ps1` in a GitHub Action using the SPN created with `azure-sp-create.sh`.
+
+```yaml
+name: M365 Mailbox Setup (non-interactive)
+on:
+   workflow_dispatch:
+jobs:
+   m365-setup:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Checkout
+         uses: actions/checkout@v4
+
+      - name: Login to Azure
+         uses: azure/login@v1
+         with:
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Run m365 full setup
+         env:
+            KEY_VAULT_NAME: myKeyVault
+            SP_APP_NAME: my-automation-app
+         run: |
+            pwsh -c './m365-full-setup.ps1 -AuthMode Certificate -SPClientId ${{ secrets.SP_CLIENT_ID }} -SPTenantId ${{ secrets.AZURE_TENANT_ID }} -SPAppName $env:SP_APP_NAME -KeyVaultName $env:KEY_VAULT_NAME -UserPrincipalName support@bakerstreetproject.com -DisplayName "Support" -LicenseSku contoso:ENTERPRISEPACK'
+```
+
+In this workflow, the script will look for the following KeyVault secrets:
+- `spn-<appName>-pfx-password` — the PFX password for the certificate
+- `spn-<appName>-cert-name` — the KeyVault certificate name used for the certificate (if provided)
+- `spn-<appName>-thumbprint` — optional thumbprint used to skip PFX import if you already saved it
+
+
+# ENV: set EXPORT_PASSWORD_TO_FILE=true to write generated PFX password into app_credentials.txt
+# ENV: set STORE_PASSWORD_IN_KEYVAULT=true to store the PFX password as a secret in Key Vault
+```
+
 ### Setup GitHub Copilot for this Repository
 
 1. **Install Required Extensions** (VS Code will prompt automatically):
@@ -314,3 +388,19 @@ For questions or issues:
 ---
 
 **⚠️ Important**: This infrastructure is designed for high-threat environments. Do not modify security settings without proper review and approval.
+
+---
+
+## 🏁 Deployment Recommendations — Which scripts to deploy
+The following scripts are intended to be deployed and used in automation pipelines and should be considered for SaaS or enterprise automation:
+
+- `azure-sp-create.sh` — Create Service Principals and certificate-based authentication for automation. Should be run as a privileged, audited step (CI or by a human operator). This script can import PFX to Key Vault, optionally store PFX password and app credentials, and assign Key Vault access policy to the created SP.
+- `m365-full-setup.ps1` — Orchestrates mailbox creation and license assignment. Should run on a Windows runner or in an environment where `Import-PfxCertificate` works. Supports non-interactive certificate-based auth by fetching PFX and password from Key Vault.
+- `m365-create-mailbox.ps1` / `m365-assign-license.ps1` — Support scripts called by `m365-full-setup.ps1`. Deployed alongside the main script.
+- `.github/workflows/create-spn.yml` — Example secure automation to create SPN in CI. This workflow should be gated by repository environments and reviewers when used for production.
+Important: to assign Key Vault access policies or role assignments for the created SP, the token used by the workflow (AZURE_CREDENTIALS) must be from an identity that has the appropriate privileges (KeyVault 'set-policy' or subscription-level role assignment). If you enable `assign_kv_access_policy` in the workflow, the running identity must be Owner or Key Vault administrator.
+- `.github/workflows/m365-setup-windows.yml` — Example Windows-based CI demonstrating `m365-full-setup.ps1` and certificate import.
+- `stripe_webhook_server.py` — Webhook listener that accepts Stripe events (consider deploying in an Azure Container Instance or Azure Function with KeyVault for secrets).
+- `sales_bot.py` — Sales automation; schedule this as a GitHub Action or container, but avoid running in prod without monitoring and throttling.
+
+Next: review the `BLUEPRINT_NEXT_PHASE.md` for step-by-step procedures to deploy and validate.
