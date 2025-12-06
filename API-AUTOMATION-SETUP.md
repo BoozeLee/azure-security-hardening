@@ -55,8 +55,12 @@ LINKEDIN_ACCESS_TOKEN=your-linkedin-token
 EOF
 ```
 
-### Test the Sales Bot
+### Test the Sales Bot (Use virtualenv)
 ```bash
+# Create and activate virtualenv
+./venv-setup.sh
+source .venv/bin/activate
+
 # Run lead generation test
 python3 sales_bot.py
 
