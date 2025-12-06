@@ -194,6 +194,31 @@ azure-security-hardening/
 ---
 
 **Ready to secure your Azure infrastructure?**  
+## 🧪 Dry-Run Testing (Local and CI)
+
+To safely test automation without provisioning cloud resources, set `QWE_DRY_RUN=true` and use the `fakebin` technique to intercept `az` / `gh` calls:
+
+```bash
+export QWE_DRY_RUN=true
+export QWE_DEBUG=1
+mkdir -p fakebin
+cat > fakebin/az <<'EOF'
+#!/bin/bash
+echo "Mock az: $*"
+exit 0
+EOF
+cat > fakebin/gh <<'EOF'
+#!/bin/bash
+echo "Mock gh: $*"
+exit 0
+EOF
+chmod +x fakebin/az fakebin/gh
+PATH="$PWD/fakebin:$PATH"
+bash ./ai-workflow-orchestrator.sh
+```
+
+The repository also contains a GitHub Actions job `.github/workflows/qa-qwe.yaml` that runs a dry-run QWE validation and unit tests in CI.
+
 **Contact us today: [kiliaan@bakerstreetproject.com](mailto:kiliaan@bakerstreetproject.com)**  
 **Support:** [support@bakerstreetproject.com](mailto:support@bakerstreetproject.com)  
 **Payment / Stripe:** [support+stripe@bakerstreetproject.com](mailto:support+stripe@bakerstreetproject.com)

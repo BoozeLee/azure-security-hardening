@@ -37,6 +37,14 @@ safe_send_qwe() {
   fi
 }
 
+# Provide fallback gh_or_dry/az_or_dry if helper not present
+if ! declare -f gh_or_dry >/dev/null 2>&1; then
+  gh_or_dry() { command gh "$@"; }
+fi
+if ! declare -f az_or_dry >/dev/null 2>&1; then
+  az_or_dry() { command az "$@"; }
+fi
+
 
 # Check gh auth
 echo "🔒 Checking GitHub CLI authentication and scopes..."
