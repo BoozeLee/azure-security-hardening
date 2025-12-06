@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "name": "Azure Security Hardening Project",
+  "description": "High-security Azure infrastructure deployment using Bicep templates for high-threat environment protection",
+  "context": {
+    "projectType": "azure-infrastructure",
+    "primaryLanguages": ["bicep", "yaml", "json"],
+    "frameworks": ["azure-resource-manager", "github-actions"],
+    "purpose": "security-hardening",
+    "threatLevel": "high"
+  },
+  "patterns": {
+    "infrastructureFiles": "infra/**/*.bicep",
+    "workflowFiles": ".github/workflows/**/*.{yml,yaml}",
+    "configurationFiles": "**/*.{json,yaml,yml}",
+    "documentationFiles": "**/*.md"
+  },
+  "exclude": [
+    "node_modules/**",
+    ".azure/**",
+    "*.log",
+    "*.key",
+    "*.pem"
+  ],
+  "copilot": {
+    "enabledFileTypes": [
+      "bicep",
+      "yaml", 
+      "json",
+      "markdown",
+      "powershell",
+      "shell"
+    ],
+    "contextHints": {
+      "architecture": "Azure cloud infrastructure with maximum security controls",
+      "compliance": "High-threat environment protection requirements",
+      "owner": "kiliaan@bakerstreetproject221b.store",
+      "environment": "Production security-hardened resources"
+    },
+    "codeStyle": {
+      "bicep": {
+        "useExplicitTypes": true,
+        "enforceNamingConventions": true,
+        "requireDocumentation": true
+      },
+      "security": {
+        "requireEncryption": true,
+        "blockPublicAccess": true,
+        "enforcePrivateEndpoints": true,
+        "enableAuditLogging": true
+      }
+    }
+  }
+}

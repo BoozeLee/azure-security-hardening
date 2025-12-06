@@ -1,0 +1,45 @@
+# Git attributes for better language detection and Copilot understanding
+
+# Bicep files (Azure Resource Manager templates)
+*.bicep text eol=lf linguist-language=bicep
+
+# YAML files (GitHub Actions, Azure DevOps, Kubernetes)
+*.yaml text eol=lf linguist-language=yaml
+*.yml text eol=lf linguist-language=yaml
+
+# JSON files
+*.json text eol=lf linguist-language=json
+
+# Markdown files
+*.md text eol=lf linguist-language=markdown
+*.markdown text eol=lf linguist-language=markdown
+
+# PowerShell scripts
+*.ps1 text eol=lf linguist-language=powershell
+
+# Shell scripts
+*.sh text eol=lf linguist-language=shell
+
+# Terraform files
+*.tf text eol=lf linguist-language=terraform
+*.tfvars text eol=lf linguist-language=terraform
+
+# Azure CLI scripts
+*.azcli text eol=lf linguist-language=shell
+
+# Configuration files
+*.config text eol=lf
+*.conf text eol=lf
+
+# Log files (binary)
+*.log binary
+
+# Azure specific files
+.azure/ export-ignore
+*.azureauth export-ignore
+
+# Security sensitive files
+*.key export-ignore
+*.pem export-ignore
+*.p12 export-ignore
+*.pfx export-ignore

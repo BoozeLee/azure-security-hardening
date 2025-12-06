@@ -1,0 +1,30 @@
+{
+    "recommendations": [
+        // GitHub Copilot extensions
+        "github.copilot",
+        "github.copilot-chat",
+        
+        // Azure development extensions
+        "ms-azuretools.vscode-bicep",
+        "ms-azuretools.vscode-azureresourcegroups",
+        "ms-azuretools.azure-dev",
+        "ms-azuretools.vscode-azure-github-copilot",
+        
+        // Infrastructure and DevOps
+        "redhat.vscode-yaml",
+        "ms-vscode.vscode-json",
+        "ms-azure-devops.azure-pipelines",
+        
+        // Security and compliance
+        "ms-azuretools.vscode-azuresecurity",
+        "ms-azuretools.vscode-azurepolicy",
+        
+        // Git and version control
+        "eamodio.gitlens",
+        "github.vscode-pull-request-github",
+        
+        // Documentation and markdown
+        "yzhang.markdown-all-in-one",
+        "shd101wyy.markdown-preview-enhanced"
+    ]
+}

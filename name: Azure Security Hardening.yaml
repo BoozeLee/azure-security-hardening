@@ -1,0 +1,58 @@
+name: Azure Security Hardening
+
+on:
+  workflow_dispatch:
+
+jobs:
+  security-hardening:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Validate deployment before applying changes
+      - name: Validate Deployment (What-If)
+        run: az deployment group what-if --resource-group <resourceGroup> --template-file infra/security.bicep
+
+      # Enable Defender for Cloud
+      - name: Enable Defender for Cloud
+        run: az security pricing create --name VirtualMachines --tier Standard
+
+      # Assign strict Azure Policies
+      - name: Assign Azure Policy
+        run: az policy assignment create --name "EnforceSecurity" --policy <policyDefinitionId> --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Restrict public network access for all resources
+      - name: Restrict Public Network Access
+        run: az storage account update --name <storageAccountName> --resource-group <resourceGroup> --public-network-access Disabled
+
+      # Enforce MFA and least privilege
+      - name: Enforce MFA
+        run: az ad conditional-access policy create --display-name "Require MFA" --state enabled --conditions <conditions>
+
+      # Deploy Key Vault and set access policies
+      - name: Deploy Key Vault
+        run: az deployment group create --resource-group <resourceGroup> --template-file infra/keyvault.bicep
+
+      # Enable diagnostic logging and monitoring
+      - name: Enable Diagnostic Logging
+        run: az monitor diagnostic-settings create --resource <resourceId> --workspace <logAnalyticsWorkspaceId>
+
+      # Configure Azure Backup
+      - name: Configure Azure Backup
+        run: az backup vault create --name <backupVaultName> --resource-group <resourceGroup>
+
+      # Patch VMs and disable unused services
+      - name: Patch VMs
+        run: az vm run-command invoke --command-id RunShellScript --name <vmName> --resource-group <resourceGroup> --scripts "sudo apt-get update && sudo apt-get upgrade -y"
+
+      # Monitor workflow and remediate failures
+      - name: Monitor Workflow
+        run: echo "Monitor workflow runs and set up alerts for failures"
