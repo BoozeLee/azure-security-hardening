@@ -1,0 +1,607 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "6166400582740803816"
+    }
+  },
+  "parameters": {
+    "firewallName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Firewall name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for resources"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network name for firewall"
+      }
+    },
+    "enablePremiumFirewall": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Azure Firewall Premium SKU"
+      }
+    },
+    "enableThreatIntelligence": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable threat intelligence"
+      }
+    },
+    "enableDnsProxy": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable DNS proxy"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Resource tags"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}-pip', parameters('firewallName'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "ddosSettings": {
+          "protectionMode": "Enabled"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', parameters('vnetName'), 'AzureFirewallSubnet')]",
+      "properties": {
+        "addressPrefix": "10.0.1.0/26",
+        "serviceEndpoints": [],
+        "delegations": [],
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Network/firewallPolicies",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}-policy', parameters('firewallName'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "sku": {
+          "tier": "[if(parameters('enablePremiumFirewall'), 'Premium', 'Standard')]"
+        },
+        "threatIntelMode": "[if(parameters('enableThreatIntelligence'), 'Alert', 'Off')]",
+        "threatIntelWhitelist": {
+          "ipAddresses": [],
+          "fqdns": []
+        },
+        "intrusionDetection": "[if(parameters('enablePremiumFirewall'), createObject('mode', 'Alert', 'configuration', createObject('signatureOverrides', createArray(), 'bypassTrafficSettings', createArray())), null())]",
+        "dnsSettings": "[if(parameters('enableDnsProxy'), createObject('servers', createArray(), 'enableProxy', true()), null())]",
+        "insights": {
+          "isEnabled": true,
+          "retentionDays": 90,
+          "logAnalyticsResources": {
+            "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', format('{0}-policy', parameters('firewallName')), 'EnterpriseApplicationRules')]",
+      "properties": {
+        "priority": 100,
+        "ruleCollections": [
+          {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "name": "AllowAzureServices",
+            "priority": 100,
+            "action": {
+              "type": "Allow"
+            },
+            "rules": [
+              {
+                "ruleType": "ApplicationRule",
+                "name": "AllowAzureMonitor",
+                "protocols": [
+                  {
+                    "protocolType": "Https",
+                    "port": 443
+                  }
+                ],
+                "targetFqdns": [
+                  "*.ods.opinsights.azure.com",
+                  "*.oms.opinsights.azure.com",
+                  "*.monitoring.azure.com"
+                ],
+                "sourceAddresses": [
+                  "*"
+                ]
+              },
+              {
+                "ruleType": "ApplicationRule",
+                "name": "AllowAzureBackup",
+                "protocols": [
+                  {
+                    "protocolType": "Https",
+                    "port": 443
+                  }
+                ],
+                "targetFqdns": [
+                  "*.backup.windowsazure.com",
+                  "*.blob.core.windows.net"
+                ],
+                "sourceAddresses": [
+                  "*"
+                ]
+              },
+              {
+                "ruleType": "ApplicationRule",
+                "name": "AllowWindowsUpdate",
+                "protocols": [
+                  {
+                    "protocolType": "Https",
+                    "port": 443
+                  },
+                  {
+                    "protocolType": "Http",
+                    "port": 80
+                  }
+                ],
+                "targetFqdns": [
+                  "*.windowsupdate.microsoft.com",
+                  "*.update.microsoft.com",
+                  "*.windowsupdate.com"
+                ],
+                "sourceAddresses": [
+                  "*"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies', format('{0}-policy', parameters('firewallName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', format('{0}-policy', parameters('firewallName')), 'EnterpriseNetworkRules')]",
+      "properties": {
+        "priority": 200,
+        "ruleCollections": [
+          {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "name": "AllowCriticalServices",
+            "priority": 200,
+            "action": {
+              "type": "Allow"
+            },
+            "rules": [
+              {
+                "ruleType": "NetworkRule",
+                "name": "AllowDNS",
+                "ipProtocols": [
+                  "UDP"
+                ],
+                "sourceAddresses": [
+                  "*"
+                ],
+                "destinationAddresses": [
+                  "*"
+                ],
+                "destinationPorts": [
+                  "53"
+                ]
+              },
+              {
+                "ruleType": "NetworkRule",
+                "name": "AllowNTP",
+                "ipProtocols": [
+                  "UDP"
+                ],
+                "sourceAddresses": [
+                  "*"
+                ],
+                "destinationAddresses": [
+                  "*"
+                ],
+                "destinationPorts": [
+                  "123"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', format('{0}-policy', parameters('firewallName')), 'EnterpriseApplicationRules')]",
+        "[resourceId('Microsoft.Network/firewallPolicies', format('{0}-policy', parameters('firewallName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('firewallName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "sku": {
+          "name": "AZFW_VNet",
+          "tier": "[if(parameters('enablePremiumFirewall'), 'Premium', 'Standard')]"
+        },
+        "threatIntelMode": "[if(parameters('enableThreatIntelligence'), 'Alert', 'Off')]",
+        "ipConfigurations": [
+          {
+            "name": "firewallIpConfig",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('firewallName')))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AzureFirewallSubnet')]"
+              }
+            }
+          }
+        ],
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/firewallPolicies', format('{0}-policy', parameters('firewallName')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies', format('{0}-policy', parameters('firewallName')))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('firewallName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AzureFirewallSubnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "scope": "[format('Microsoft.Network/azureFirewalls/{0}', parameters('firewallName'))]",
+      "name": "[format('{0}-diagnostics', parameters('firewallName'))]",
+      "properties": {
+        "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]",
+        "logs": [
+          {
+            "categoryGroup": "allLogs",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": true,
+              "days": 90
+            }
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": true,
+              "days": 90
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/azureFirewalls', parameters('firewallName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-09-01",
+      "name": "waf-pip",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "ddosSettings": {
+          "protectionMode": "Enabled"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', parameters('vnetName'), 'AppGatewaySubnet')]",
+      "properties": {
+        "addressPrefix": "10.0.2.0/26",
+        "serviceEndpoints": [],
+        "delegations": [],
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AzureFirewallSubnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
+      "apiVersion": "2023-09-01",
+      "name": "enterprise-waf-policy",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "policySettings": {
+          "requestBodyCheck": true,
+          "maxRequestBodySizeInKb": 128,
+          "fileUploadLimitInMb": 100,
+          "state": "Enabled",
+          "mode": "Prevention"
+        },
+        "managedRules": {
+          "managedRuleSets": [
+            {
+              "ruleSetType": "OWASP",
+              "ruleSetVersion": "3.2",
+              "ruleGroupOverrides": []
+            },
+            {
+              "ruleSetType": "Microsoft_BotManagerRuleSet",
+              "ruleSetVersion": "1.0"
+            }
+          ]
+        },
+        "customRules": [
+          {
+            "name": "BlockSuspiciousUserAgents",
+            "priority": 100,
+            "ruleType": "MatchRule",
+            "action": "Block",
+            "matchConditions": [
+              {
+                "matchVariables": [
+                  {
+                    "variableName": "RequestHeaders",
+                    "selector": "User-Agent"
+                  }
+                ],
+                "operator": "Contains",
+                "negationConditon": false,
+                "matchValues": [
+                  "bot",
+                  "crawler",
+                  "spider"
+                ],
+                "transforms": [
+                  "Lowercase"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "RateLimitPerIP",
+            "priority": 200,
+            "ruleType": "RateLimitRule",
+            "rateLimitDuration": "OneMin",
+            "rateLimitThreshold": 100,
+            "action": "Block",
+            "matchConditions": [
+              {
+                "matchVariables": [
+                  {
+                    "variableName": "RemoteAddr"
+                  }
+                ],
+                "operator": "IPMatch",
+                "negationConditon": false,
+                "matchValues": [
+                  "0.0.0.0/0"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "apiVersion": "2023-09-01",
+      "name": "enterprise-waf",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "sku": {
+          "name": "WAF_v2",
+          "tier": "WAF_v2",
+          "capacity": 2
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AppGatewaySubnet')]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGatewayFrontendIP",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'waf-pip')]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "port443",
+            "properties": {
+              "port": 443
+            }
+          },
+          {
+            "name": "port80",
+            "properties": {
+              "port": 80
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "appServicePool",
+            "properties": {
+              "backendAddresses": []
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appServiceBackendHttpSettings",
+            "properties": {
+              "port": 443,
+              "protocol": "Https",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": true,
+              "requestTimeout": 30
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appServiceHttpListener",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', 'enterprise-waf', 'appGatewayFrontendIP')]"
+              },
+              "frontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', 'enterprise-waf', 'port443')]"
+              },
+              "protocol": "Https",
+              "requireServerNameIndication": false
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "name": "appServiceRoutingRule",
+            "properties": {
+              "ruleType": "Basic",
+              "priority": 100,
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', 'enterprise-waf', 'appServiceHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'enterprise-waf', 'appServicePool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', 'enterprise-waf', 'appServiceBackendHttpSettings')]"
+              }
+            }
+          }
+        ],
+        "webApplicationFirewallConfiguration": {
+          "enabled": true,
+          "firewallMode": "Prevention",
+          "ruleSetType": "OWASP",
+          "ruleSetVersion": "3.2",
+          "disabledRuleGroups": [],
+          "requestBodyCheck": true,
+          "maxRequestBodySizeInKb": 128,
+          "fileUploadLimitInMb": 100
+        },
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', 'enterprise-waf-policy')]"
+        },
+        "enableHttp2": true,
+        "autoscaleConfiguration": {
+          "minCapacity": 2,
+          "maxCapacity": 10
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AppGatewaySubnet')]",
+        "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', 'enterprise-waf-policy')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'waf-pip')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "scope": "[format('Microsoft.Network/applicationGateways/{0}', 'enterprise-waf')]",
+      "name": "waf-diagnostics",
+      "properties": {
+        "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]",
+        "logs": [
+          {
+            "categoryGroup": "allLogs",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": true,
+              "days": 90
+            }
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": true,
+              "days": 90
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/applicationGateways', 'enterprise-waf')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "firewallId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/azureFirewalls', parameters('firewallName'))]"
+    },
+    "firewallPrivateIP": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/azureFirewalls', parameters('firewallName')), '2023-09-01').ipConfigurations[0].properties.privateIPAddress]"
+    },
+    "wafId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/applicationGateways', 'enterprise-waf')]"
+    },
+    "wafPublicIP": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', 'waf-pip'), '2023-09-01').ipAddress]"
+    }
+  }
+}

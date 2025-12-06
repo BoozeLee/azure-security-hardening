@@ -1,0 +1,191 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "6872292214659468740"
+    }
+  },
+  "parameters": {
+    "securityTeamGroupId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Security team Azure AD group object ID"
+      }
+    },
+    "devTeamGroupId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Development team Azure AD group object ID"
+      }
+    },
+    "opsTeamGroupId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Operations team Azure AD group object ID"
+      }
+    },
+    "enableSecurityTeam": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Security team roles"
+      }
+    },
+    "enableDevTeam": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Development team roles"
+      }
+    },
+    "enableOpsTeam": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Operations team roles"
+      }
+    }
+  },
+  "resources": [
+    {
+      "condition": "[and(parameters('enableSecurityTeam'), not(equals(parameters('securityTeamGroupId'), '')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('securityTeamGroupId'), 'Security Admin')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'fb1c8493-542b-48eb-b624-b4c8fea62acd')]",
+        "principalId": "[parameters('securityTeamGroupId')]",
+        "principalType": "Group",
+        "description": "Grants Security Admin permissions to Security team for managing security policies and configurations"
+      }
+    },
+    {
+      "condition": "[and(parameters('enableSecurityTeam'), not(equals(parameters('securityTeamGroupId'), '')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('securityTeamGroupId'), 'Security Reader')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '39bc4728-0917-49c7-9d2c-d95423bc2eb4')]",
+        "principalId": "[parameters('securityTeamGroupId')]",
+        "principalType": "Group",
+        "description": "Grants Security Reader permissions to Security team for viewing security configurations"
+      }
+    },
+    {
+      "condition": "[and(parameters('enableSecurityTeam'), not(equals(parameters('securityTeamGroupId'), '')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('securityTeamGroupId'), 'Key Vault Admin')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b002-a05e72a3c5b8')]",
+        "principalId": "[parameters('securityTeamGroupId')]",
+        "principalType": "Group",
+        "description": "Grants Key Vault Administrator permissions to Security team for managing secrets and keys"
+      }
+    },
+    {
+      "condition": "[and(parameters('enableDevTeam'), not(equals(parameters('devTeamGroupId'), '')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('devTeamGroupId'), 'Contributor')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "principalId": "[parameters('devTeamGroupId')]",
+        "principalType": "Group",
+        "description": "Grants Contributor permissions to Development team for managing resources"
+      }
+    },
+    {
+      "condition": "[and(parameters('enableDevTeam'), not(equals(parameters('devTeamGroupId'), '')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('devTeamGroupId'), 'Storage Blob Contributor')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+        "principalId": "[parameters('devTeamGroupId')]",
+        "principalType": "Group",
+        "description": "Grants Storage Blob Data Contributor permissions to Development team for blob storage access"
+      }
+    },
+    {
+      "condition": "[and(parameters('enableDevTeam'), not(equals(parameters('devTeamGroupId'), '')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('devTeamGroupId'), 'Key Vault Secrets User')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
+        "principalId": "[parameters('devTeamGroupId')]",
+        "principalType": "Group",
+        "description": "Grants Key Vault Secrets User permissions to Development team for reading application secrets"
+      }
+    },
+    {
+      "condition": "[and(parameters('enableOpsTeam'), not(equals(parameters('opsTeamGroupId'), '')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('opsTeamGroupId'), 'Monitoring Contributor')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '749f88d5-cbae-40b8-bcfc-e573ddc772fa')]",
+        "principalId": "[parameters('opsTeamGroupId')]",
+        "principalType": "Group",
+        "description": "Grants Monitoring Contributor permissions to Operations team for managing monitoring and alerts"
+      }
+    },
+    {
+      "condition": "[and(parameters('enableOpsTeam'), not(equals(parameters('opsTeamGroupId'), '')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('opsTeamGroupId'), 'Log Analytics Contributor')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '92aaf0da-9dab-42b6-94a3-d43ce8d16293')]",
+        "principalId": "[parameters('opsTeamGroupId')]",
+        "principalType": "Group",
+        "description": "Grants Log Analytics Contributor permissions to Operations team for managing logs and queries"
+      }
+    },
+    {
+      "condition": "[and(parameters('enableOpsTeam'), not(equals(parameters('opsTeamGroupId'), '')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('opsTeamGroupId'), 'Backup Contributor')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e467623-bb1f-42f4-a55d-6e525e11384b')]",
+        "principalId": "[parameters('opsTeamGroupId')]",
+        "principalType": "Group",
+        "description": "Grants Backup Contributor permissions to Operations team for managing backups and recovery"
+      }
+    },
+    {
+      "condition": "[and(parameters('enableOpsTeam'), not(equals(parameters('opsTeamGroupId'), '')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('opsTeamGroupId'), 'Reader')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+        "principalId": "[parameters('opsTeamGroupId')]",
+        "principalType": "Group",
+        "description": "Grants Reader permissions to Operations team for viewing all resources"
+      }
+    }
+  ],
+  "outputs": {
+    "securityTeamRoleAssignments": {
+      "type": "array",
+      "value": "[if(and(parameters('enableSecurityTeam'), not(equals(parameters('securityTeamGroupId'), ''))), createArray(resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('securityTeamGroupId'), 'Security Admin')), resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('securityTeamGroupId'), 'Security Reader')), resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('securityTeamGroupId'), 'Key Vault Admin'))), createArray())]"
+    },
+    "devTeamRoleAssignments": {
+      "type": "array",
+      "value": "[if(and(parameters('enableDevTeam'), not(equals(parameters('devTeamGroupId'), ''))), createArray(resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('devTeamGroupId'), 'Contributor')), resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('devTeamGroupId'), 'Storage Blob Contributor')), resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('devTeamGroupId'), 'Key Vault Secrets User'))), createArray())]"
+    },
+    "opsTeamRoleAssignments": {
+      "type": "array",
+      "value": "[if(and(parameters('enableOpsTeam'), not(equals(parameters('opsTeamGroupId'), ''))), createArray(resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('opsTeamGroupId'), 'Monitoring Contributor')), resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('opsTeamGroupId'), 'Log Analytics Contributor')), resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('opsTeamGroupId'), 'Backup Contributor')), resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('opsTeamGroupId'), 'Reader'))), createArray())]"
+    }
+  }
+}

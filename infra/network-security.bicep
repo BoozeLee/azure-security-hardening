@@ -172,5 +172,6 @@ resource flowLogs 'Microsoft.Network/networkWatchers/flowLogs@2023-09-01' = {
 
 // Outputs
 output vnetId string = virtualNetwork.id
+output vnetName string = virtualNetwork.name
 output subnetId string = virtualNetwork.properties.subnets[0].id
 output nsgId string = networkSecurityGroup.id

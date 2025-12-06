@@ -1,0 +1,224 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "8920484456342641063"
+    }
+  },
+  "parameters": {
+    "securityContactEmail": {
+      "type": "string",
+      "metadata": {
+        "description": "Security contact email for alerts"
+      }
+    },
+    "enableDefenderForServers": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for Servers"
+      }
+    },
+    "enableDefenderForStorage": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for Storage"
+      }
+    },
+    "enableDefenderForKeyVault": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for Key Vault"
+      }
+    },
+    "enableDefenderForResourceManager": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for Resource Manager"
+      }
+    },
+    "enableDefenderForDns": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for DNS"
+      }
+    },
+    "enableDefenderForAppService": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for App Service"
+      }
+    },
+    "enableDefenderForContainers": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for Containers"
+      }
+    },
+    "enableDefenderForSql": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for SQL"
+      }
+    },
+    "enableDefenderForOpenSourceDatabases": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for Open-Source Databases"
+      }
+    },
+    "enableDefenderForCosmosDb": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for Azure Cosmos DB"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Security/securityContacts",
+      "apiVersion": "2020-01-01-preview",
+      "name": "default",
+      "properties": {
+        "emails": "[parameters('securityContactEmail')]",
+        "phone": "",
+        "alertNotifications": {
+          "state": "On",
+          "minimalSeverity": "Low"
+        },
+        "notificationsByRole": {
+          "state": "On",
+          "roles": [
+            "Owner",
+            "Contributor"
+          ]
+        }
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForServers')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "VirtualMachines",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForStorage')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "StorageAccounts",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForKeyVault')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "KeyVaults",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForResourceManager')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "Arm",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForDns')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "Dns",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForAppService')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "AppServices",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForContainers')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "Containers",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForSql')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "SqlServers",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForSql')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "SqlServerVirtualMachines",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForOpenSourceDatabases')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "OpenSourceRelationalDatabases",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "condition": "[parameters('enableDefenderForCosmosDb')]",
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2022-03-01",
+      "name": "CosmosDbs",
+      "properties": {
+        "pricingTier": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.Security/autoProvisioningSettings",
+      "apiVersion": "2017-08-01-preview",
+      "name": "default",
+      "properties": {
+        "autoProvision": "On"
+      }
+    }
+  ],
+  "outputs": {
+    "securityContactEmail": {
+      "type": "string",
+      "value": "[reference(subscriptionResourceId('Microsoft.Security/securityContacts', 'default'), '2020-01-01-preview').emails]"
+    }
+  }
+}
