@@ -12,26 +12,23 @@ AZURE_OPENAI_ENDPOINT="${AZURE_OPENAI_ENDPOINT:-}"
 QWE_URL="${QWE_URL:-http://127.0.0.1:9001/api/v1/agents/message}"
 
 # Dependencies: gh, jq, az
-for dep in gh jq az; do
+for dep in gh jq az curl; do
   if ! command -v $dep &>/dev/null; then
     echo "Error: $dep is required but not installed. Install $dep and re-run."
     exit 1
   fi
 done
 
-# Optional QWE notification helper (local communicator)
-send_qwe() {
-  # If QWE_URL is empty, don't attempt to send anything
-  if [ -z "${QWE_URL:-}" ]; then
-    return 0
-  fi
-  # Accept message as argument
-  local _msg="$1"
-  # Construct JSON payload and post to qwe server
-  local _payload
-  _payload=$(jq -nc --arg msg "${_msg}" '{channel:"agents", message:$msg}')
-  curl -s -X POST -H "Content-Type: application/json" -d "${_payload}" "${QWE_URL}" >/dev/null 2>&1 || true
-}
+
+# Source centralized QWE helper (scripts/qwe-sh)
+if [ -f "${ORIGINAL_PWD}/scripts/qwe-sh" ]; then
+  # If the script is invoked directly, set QWE_AGENT from filename
+  export QWE_AGENT="${QWE_AGENT:-automate-raptor-cli}"
+  # shellcheck source=/dev/null
+  source "${ORIGINAL_PWD}/scripts/qwe-sh"
+else
+  echo "Warning: scripts/qwe-sh not found; QWE notifications disabled (set QWE_URL manually to enable)."
+fi
 
 
 # Check gh auth

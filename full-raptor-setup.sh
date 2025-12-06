@@ -17,6 +17,14 @@ abort() { echo "\n\033[0;31mError: $*\033[0m\n"; exit 1; }
 info() { echo "\033[0;34m$*\033[0m"; }
 success() { echo "\033[0;32m$*\033[0m"; }
 
+# Try to source centralized helper if available
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+  # shellcheck source=/dev/null
+  source "${PWD}/scripts/qwe-sh"
+  export QWE_AGENT="full-raptor-setup"
+  send_qwe "Starting full-raptor-setup for ORG=${ORG:-unknown}"
+fi
+
 # Pre-check gh auth
 info "Checking gh authentication..."
 if ! gh auth status --hostname github.com &>/dev/null; then
@@ -68,6 +76,7 @@ info "Creating org secret: $SECRET_NAME"
 SECRET_JSON=$(jq -nc --arg k "$AZURE_OPENAI_KEY" --arg e "$AZURE_OPENAI_ENDPOINT" '{type:"azure_openai", api_key:$k, endpoint:$e}')
 # Create secret (org-level)
 gh secret set "$SECRET_NAME" --org "$ORG" --body "$SECRET_JSON"
+if type send_qwe >/dev/null 2>&1; then send_qwe "Saved Azure OpenAI credentials as org secret: $SECRET_NAME for $ORG"; fi
 
 # Validate secret
 if ! gh secret list --org "$ORG" | grep -q "$SECRET_NAME"; then
@@ -81,6 +90,7 @@ MODEL_PAYLOAD=$(jq -nc --arg model_name "$MODEL_NAME" --arg display_name "$DISPL
 echo "$MODEL_PAYLOAD" > /tmp/model_payload.json
 
 info "Registering model with provider $PROVIDER_ID..."
+if type send_qwe >/dev/null 2>&1; then send_qwe "Registering model ${MODEL_NAME} with provider ${PROVIDER_ID}"; fi
 set +e
 REGISTER_RESPONSE=$(gh api --method POST /orgs/$ORG/ai/providers/${PROVIDER_ID}/models --input /tmp/model_payload.json 2>&1)
 RC=$?
@@ -107,6 +117,7 @@ if [ -z "$MODEL_ID" ]; then
   abort "Failed to detect created model id. Please check the provider UI/Logs."
 fi
 success "Model registered successfully: $MODEL_ID ($MODEL_NAME)"
+if type send_qwe >/dev/null 2>&1; then send_qwe "Model registered successfully: ${MODEL_NAME} id=${MODEL_ID}"; fi
 
 # If the model is not default, try to set it default by patch
 info "Ensuring model is set as org default..."
@@ -126,6 +137,7 @@ info "Listing provider models (to confirm):"
 gh api /orgs/$ORG/ai/providers/${PROVIDER_ID}/models --method GET --jq '.[] | {id: .id, model_name: .model_name, display_name: .display_name, visibility: .visibility, is_default: .is_default}'
 
 success "Raptor mini model automation complete."
+if type send_qwe >/dev/null 2>&1; then send_qwe "Raptor mini model automation complete for ORG=${ORG}"; fi
 
 # Next steps
 info "Next steps:"

@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+## qwe-sh: helper functions to send messages to the local qwe communicator
+## Usage:
+##   source ./scripts/qwe-sh
+##   send_qwe "Hello world"
+
+set -euo pipefail
+
+QWE_URL_DEFAULT="http://127.0.0.1:9001/api/v1/agents/message"
+QWE_URL="${QWE_URL:-${QWE_URL_DEFAULT}}"
+QWE_CHANNEL="${QWE_CHANNEL:-agents}"
+QWE_AGENT="${QWE_AGENT:-$(basename "$0") }"
+QWE_TOKEN="${QWE_TOKEN:-}" # Bearer token optional
+QWE_ENABLED="${QWE_ENABLED:-true}"
+QWE_RETRIES="${QWE_RETRIES:-2}"
+QWE_RETRY_DELAY="${QWE_RETRY_DELAY:-1}"
+QWE_DRY_RUN="${QWE_DRY_RUN:-false}"
+QWE_DEBUG="${QWE_DEBUG:-0}"
+QWE_LOG_FILE="${QWE_LOG_FILE:-/tmp/qwe_send.log}"
+
+_qwe_log() {
+  if [ "$QWE_DEBUG" -eq 1 ]; then
+    echo "[qwe-sh] $*" >&2
+  fi
+  if [ -n "$QWE_LOG_FILE" ]; then
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) - $*" >> "$QWE_LOG_FILE" 2>/dev/null || true
+  fi
+}
+
+# send_qwe: send a message to QWE_URL
+# Arguments: message (string); metadata (optional JSON string)
+send_qwe() {
+  if [ "$QWE_ENABLED" != "true" ]; then
+    _qwe_log "QWE disabled, skipping send"
+    return 0
+  fi
+  if [ -z "${QWE_URL:-}" ]; then
+    _qwe_log "QWE_URL not set, skipping send"
+    return 0
+  fi
+  if [ "$QWE_DRY_RUN" = "true" ]; then
+    _qwe_log "DRY_RUN enabled: would send message: $1"
+    return 0
+  fi
+
+  local _msg
+  _msg="$1"
+  local _meta
+  _meta="${2:-}"
+
+  # Build JSON payload
+  if [ -n "${_meta}" ]; then
+    _payload=$(jq -nc --arg channel "$QWE_CHANNEL" --arg agent "$QWE_AGENT" --arg message "${_msg}" --argjson meta "${_meta}" '{channel: $channel, agent: $agent, message: $message, meta: $meta}')
+  else
+    _payload=$(jq -nc --arg channel "$QWE_CHANNEL" --arg agent "$QWE_AGENT" --arg message "${_msg}" '{channel: $channel, agent: $agent, message: $message}')
+  fi
+
+  local _attempt=0
+  while [ $_attempt -le "$QWE_RETRIES" ]; do
+    _attempt=$(( _attempt + 1 ))
+    local _headers=(-H "Content-Type: application/json")
+    if [ -n "${QWE_TOKEN}" ]; then
+      _headers+=( -H "Authorization: Bearer ${QWE_TOKEN}" )
+    fi
+    _qwe_log "Attempt ${_attempt}/${QWE_RETRIES} - POST ${QWE_URL} payload=${_payload}"
+    # Use --max-time to avoid hangs
+    if curl -s -S --max-time 10 "${_headers[@]}" -X POST -d "${_payload}" "$QWE_URL" >/dev/null 2>&1; then
+      _qwe_log "Message sent successfully"
+      return 0
+    else
+      _qwe_log "Failed to send message (attempt ${_attempt})"
+      sleep $(( QWE_RETRY_DELAY * _attempt ))
+    fi
+  done
+  _qwe_log "All attempts failed; continuing since send_qwe is non-fatal"
+  return 0
+}
+
+# Support running this helper as a small CLI for manual testing
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  # Provide a simple CLI: send <message>
+  cmd="${1:-}"
+  case "$cmd" in
+    send)
+      shift || true
+      if [ $# -eq 0 ]; then
+        echo "Usage: $0 send <message> [meta-json]"
+        exit 1
+      fi
+      message="$1"
+      meta="$2"
+      send_qwe "$message" "$meta"
+      ;;
+    *)
+      echo "qwe-sh helper. Usage: $0 send <message> [meta-json]"
+      exit 0
+      ;;
+  esac
+fi

@@ -14,6 +14,13 @@ SECURITY_EMAIL="${EMAIL:-kiliaan@bakerstreetproject.com}"
 SUB_ID="${SUB_ID:-$(az account show --query id -o tsv)}"
 RG_NAME="rg-emergency-security"
 
+# Try to source centralized helper if available
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+  # shellcheck source=/dev/null
+  source "${PWD}/scripts/qwe-sh"
+  export QWE_AGENT="raptor-admin-setup"
+fi
+
 if [ -z "$PROVIDER_ID" ] || [ -z "$MODEL_ID" ]; then
   echo "PROVIDER_ID and MODEL_ID must be provided. Example: PROVIDER_ID=xxx MODEL_ID=yyy ./raptor-admin-setup.sh"
   exit 1
@@ -33,8 +40,10 @@ RC=$?
 set -e
 if [ $RC -ne 0 ]; then
   echo "Unable to patch model; ensure you have org admin rights or use the Copilot Admin UI to configure model visibility."
+  if type send_qwe >/dev/null 2>&1; then send_qwe "Model RBAC patch failed for PROVIDER_ID=$PROVIDER_ID MODEL_ID=$MODEL_ID"; fi
 else
   echo "Model visibility updated successfully."
+  if type send_qwe >/dev/null 2>&1; then send_qwe "Model RBAC updated: PROVIDER_ID=$PROVIDER_ID MODEL_ID=$MODEL_ID"; fi
 fi
 
 # 2) Create an Azure budget for the subscription to cap cost
@@ -53,8 +62,10 @@ az consumption budget create \
 
 if [ $? -eq 0 ]; then
   echo "Azure budget $BUDGET_NAME created at $AZ_BUDGET/month (notifications at 80%=$((AZ_BUDGET*80/100)))."
+  if type send_qwe >/dev/null 2>&1; then send_qwe "Azure budget $BUDGET_NAME created at ${AZ_BUDGET}/month"; fi
 else
   echo "Failed to create azure budget; check az CLI access, or create the budget in portal. Continuing..."
+  if type send_qwe >/dev/null 2>&1; then send_qwe "Failed to create Azure budget $BUDGET_NAME"; fi
 fi
 
 # 3) Create an action group and alert for budget spike
@@ -76,8 +87,10 @@ az monitor activity-log alert create \
 
 if [ $? -eq 0 ]; then
   echo "Activity log alert created to notify $SECURITY_EMAIL"
+  if type send_qwe >/dev/null 2>&1; then send_qwe "Activity log alert created to notify ${SECURITY_EMAIL}"; fi
 else
   echo "Failed to create activity log alert. Continue manual checks."
+  if type send_qwe >/dev/null 2>&1; then send_qwe "Failed to create activity log alert for ${RG_NAME}"; fi
 fi
 
 # 4) Validate model and provider listing
@@ -85,3 +98,4 @@ echo "\nVALIDATION: LISTING PROVIDER MODELS"
 gh api /orgs/$ORG/ai/providers/$PROVIDER_ID/models --method GET --jq '.[] | {model_name: .model_name, display_name: .display_name, visibility: .visibility, is_default: .is_default}'
 
 echo "\nDone: RBAC, Budgets and basic monitoring configured."
+if type send_qwe >/dev/null 2>&1; then send_qwe "Completed raptor-admin-setup for ORG=${ORG}"; fi
