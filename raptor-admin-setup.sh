@@ -11,7 +11,7 @@ MODEL_ID="${MODEL_ID:-}"
 ALLOWED_TEAM="${ALLOWED_TEAM:-}"    # Team slug if restricting
 aZ_BUDGET="${AZ_BUDGET:-10}"
 SECURITY_EMAIL="${EMAIL:-kiliaan@bakerstreetproject.com}"
-SUB_ID="${SUB_ID:-$(az account show --query id -o tsv)}"
+SUB_ID="${SUB_ID:-$(az_or_dry account show --query id -o tsv 2>/dev/null || echo "") }"
 RG_NAME="rg-emergency-security"
 
 # Try to source centralized helper if available
@@ -19,6 +19,11 @@ if [ -f "${PWD}/scripts/qwe-sh" ]; then
   # shellcheck source=/dev/null
   source "${PWD}/scripts/qwe-sh"
   export QWE_AGENT="raptor-admin-setup"
+fi
+
+# fallback az_or_dry implementation if helper is not loaded
+if ! declare -f az_or_dry >/dev/null 2>&1; then
+  az_or_dry() { command az "$@"; }
 fi
 
 if [ -z "$PROVIDER_ID" ] || [ -z "$MODEL_ID" ]; then
@@ -35,7 +40,7 @@ fi
 
 echo "Setting model visibility via GitHub API..."
 set +e
-gh api --method PATCH /orgs/$ORG/ai/providers/$PROVIDER_ID/models/$MODEL_ID --input - <<< "$PATCH_PAYLOAD"
+gh_or_dry api --method PATCH /orgs/$ORG/ai/providers/$PROVIDER_ID/models/$MODEL_ID --input - <<< "$PATCH_PAYLOAD"
 RC=$?
 set -e
 if [ $RC -ne 0 ]; then
@@ -50,7 +55,7 @@ fi
 echo "\nCONFIGURING AZURE BUDGET"
 BUDGET_NAME="security-budget"
 # Build filter - optional; keep it simple for subscription
-az consumption budget create \
+az_or_dry consumption budget create \
   --subscription "$SUB_ID" \
   --budget-name "$BUDGET_NAME" \
   --category cost \
@@ -71,14 +76,14 @@ fi
 # 3) Create an action group and alert for budget spike
 echo "\nCONFIGURING ACTION GROUP & ALERTS"
 AGRG_NAME="actiongroup-security-alerts"
-az monitor action-group create \ 
+az_or_dry monitor action-group create \
   --resource-group "$RG_NAME" \ 
   --name "$AGRG_NAME" \ 
   --action email $SECURITY_EMAIL --output none || true
 
 # Create activity log alert for admin operations to resource group
 ALERT_NAME="Security-Admin-Activity"
-az monitor activity-log alert create \
+az_or_dry monitor activity-log alert create \
   --name "$ALERT_NAME" \
   --resource-group "$RG_NAME" \
   --condition category=Administrative \
@@ -95,7 +100,7 @@ fi
 
 # 4) Validate model and provider listing
 echo "\nVALIDATION: LISTING PROVIDER MODELS"
-gh api /orgs/$ORG/ai/providers/$PROVIDER_ID/models --method GET --jq '.[] | {model_name: .model_name, display_name: .display_name, visibility: .visibility, is_default: .is_default}'
+gh_or_dry api /orgs/$ORG/ai/providers/$PROVIDER_ID/models --method GET --jq '.[] | {model_name: .model_name, display_name: .display_name, visibility: .visibility, is_default: .is_default}'
 
 echo "\nDone: RBAC, Budgets and basic monitoring configured."
 if type send_qwe >/dev/null 2>&1; then send_qwe "Completed raptor-admin-setup for ORG=${ORG}"; fi

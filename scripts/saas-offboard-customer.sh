@@ -3,6 +3,17 @@
 # Safely removes tenant resources while preserving data backup
 
 set -euo pipefail
+# Source qwe helper for dry-run support
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+    # shellcheck source=/dev/null
+    source "${PWD}/scripts/qwe-sh"
+    export QWE_AGENT="saas-offboard-customer"
+fi
+
+# Fallback az_or_dry
+if ! declare -f az_or_dry >/dev/null 2>&1; then
+    az_or_dry() { command az "$@"; }
+fi
 
 # Colors for output
 RED='\033[0;31m'
@@ -45,7 +56,7 @@ if [[ "$BACKUP_DATA" == "true" ]]; then
     TIMESTAMP=$(date +%Y%m%d-%H%M%S)
     
     # Create backup container if not exists
-    az storage container create \
+    az_or_dry storage container create \
         --account-name "$STORAGE_ACCOUNT" \
         --name "$BACKUP_CONTAINER" \
         --auth-mode login \
@@ -67,7 +78,7 @@ echo -e "${YELLOW}[2/6]${NC} Disabling API access..."
 APIM_NAME="${APIM_NAME:-sec-bsp-apim-prod}"
 RESOURCE_GROUP="${RESOURCE_GROUP:-sec-bsp-rg-prod}"
 
-az apim subscription update \
+az_or_dry apim subscription update \
     --resource-group "$RESOURCE_GROUP" \
     --service-name "$APIM_NAME" \
     --subscription-id "$TENANT_ID" \
@@ -80,8 +91,8 @@ echo -e "${GREEN}✅ API access disabled${NC}"
 echo -e "${YELLOW}[3/6]${NC} Revoking API keys..."
 KV_NAME="${KV_NAME:-sec-bsp-kv-prod}"
 
-az keyvault secret delete --vault-name "$KV_NAME" --name "tenant-${TENANT_ID}-api-key" > /dev/null 2>&1 || true
-az keyvault secret delete --vault-name "$KV_NAME" --name "tenant-${TENANT_ID}-api-secret" > /dev/null 2>&1 || true
+az_or_dry keyvault secret delete --vault-name "$KV_NAME" --name "tenant-${TENANT_ID}-api-key" > /dev/null 2>&1 || true
+az_or_dry keyvault secret delete --vault-name "$KV_NAME" --name "tenant-${TENANT_ID}-api-secret" > /dev/null 2>&1 || true
 
 echo -e "${GREEN}✅ API keys revoked${NC}"
 
@@ -95,7 +106,7 @@ echo -e "${YELLOW}[5/6]${NC} Archiving storage container..."
 CONTAINER_NAME="tenant-${TENANT_ID}"
 ARCHIVE_CONTAINER="tenant-archives"
 
-az storage container create \
+az_or_dry storage container create \
     --account-name "$STORAGE_ACCOUNT" \
     --name "$ARCHIVE_CONTAINER" \
     --auth-mode login \

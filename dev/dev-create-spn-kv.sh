@@ -9,6 +9,18 @@ show_usage() {
   exit 1
 }
 
+
+# Source qwe helper if available for dry-run
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+  # shellcheck source=/dev/null
+  source "${PWD}/scripts/qwe-sh"
+  export QWE_AGENT="dev-create-spn-kv"
+fi
+
+# fallback az_or_dry
+if ! declare -f az_or_dry >/dev/null 2>&1; then
+  az_or_dry() { command az "$@"; }
+fi
 APP_NAME=""
 KEYVAULT_NAME=""
 RESOURCE_GROUP="dev-spn-rg"
@@ -47,20 +59,20 @@ if ! command -v az >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Current subscription: $(az account show 2>/dev/null | jq -r .id || true)"
+echo "Current subscription: $(az_or_dry account show 2>/dev/null | jq -r .id || true)"
 
 echo "Ensure resource group $RESOURCE_GROUP exists"
-if ! az group show --name "$RESOURCE_GROUP" >/dev/null 2>&1; then
+if ! az_or_dry group show --name "$RESOURCE_GROUP" >/dev/null 2>&1; then
   echo "Creating resource group $RESOURCE_GROUP in $LOCATION"
-  az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
+  az_or_dry group create --name "$RESOURCE_GROUP" --location "$LOCATION"
 else
   echo "Resource group $RESOURCE_GROUP already exists"
 fi
 
 echo "Ensure Key Vault $KEYVAULT_NAME exists"
-if ! az keyvault show --name "$KEYVAULT_NAME" -g "$RESOURCE_GROUP" >/dev/null 2>&1; then
+if ! az_or_dry keyvault show --name "$KEYVAULT_NAME" -g "$RESOURCE_GROUP" >/dev/null 2>&1; then
   echo "Creating Key Vault $KEYVAULT_NAME in rg $RESOURCE_GROUP"
-  az keyvault create -n "$KEYVAULT_NAME" -g "$RESOURCE_GROUP" --location "$LOCATION" --sku standard --enable-soft-delete true
+  az_or_dry keyvault create -n "$KEYVAULT_NAME" -g "$RESOURCE_GROUP" --location "$LOCATION" --sku standard --enable-soft-delete true
 else
   echo "Key Vault $KEYVAULT_NAME already exists"
 fi
@@ -94,10 +106,10 @@ if [ -f ./app_credentials.json ]; then
   fi
   echo "App created: $APP_ID; thumbprint: $THUMBPRINT"
   echo "Verifying app credentials in AAD"
-  if az ad app credential list --id "$APP_ID" -o json | jq -r '.[].thumbprint' | grep -i "$THUMBPRINT" >/dev/null 2>&1; then
+  if az_or_dry ad app credential list --id "$APP_ID" -o json | jq -r '.[].thumbprint' | grep -i "$THUMBPRINT" >/dev/null 2>&1; then
     echo "Validation successful: thumbprint present"
   else
-    echo "Validation failed: thumbprint not found in app credentials. Check KeyVault export or CLI capability to bind KeyVault certs to app.";
+    echo "Validation failed: thumbprint not found in app credentials. Check KeyVault export or CLI capability to bind KeyVault certs to app."
     exit 1
   fi
 else

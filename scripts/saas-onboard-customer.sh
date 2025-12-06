@@ -108,6 +108,18 @@ else
     echo -e "${YELLOW}⚠️  sqlcmd not found. SQL script saved to /tmp/${TENANT_ID}-schema.sql${NC}"
 fi
 
+# Source qwe helper for dry-run support
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+    # shellcheck source=/dev/null
+    source "${PWD}/scripts/qwe-sh"
+    export QWE_AGENT="saas-onboard-customer"
+fi
+
+# Fallback az_or_dry
+if ! declare -f az_or_dry >/dev/null 2>&1; then
+    az_or_dry() { command az "$@"; }
+fi
+
 # Step 2: Generate API keys
 echo -e "${YELLOW}[2/7]${NC} Generating API keys..."
 API_KEY="sk_${TIER}_$(openssl rand -hex 32)"
@@ -115,8 +127,8 @@ API_SECRET="$(openssl rand -hex 64)"
 
 # Store in Key Vault
 KV_NAME="${KV_NAME:-sec-bsp-kv-prod}"
-az keyvault secret set --vault-name "$KV_NAME" --name "tenant-${TENANT_ID}-api-key" --value "$API_KEY" > /dev/null
-az keyvault secret set --vault-name "$KV_NAME" --name "tenant-${TENANT_ID}-api-secret" --value "$API_SECRET" > /dev/null
+az_or_dry keyvault secret set --vault-name "$KV_NAME" --name "tenant-${TENANT_ID}-api-key" --value "$API_KEY" > /dev/null
+az_or_dry keyvault secret set --vault-name "$KV_NAME" --name "tenant-${TENANT_ID}-api-secret" --value "$API_SECRET" > /dev/null
 echo -e "${GREEN}✅ API keys generated and stored in Key Vault${NC}"
 
 # Step 3: Create API Management subscription
@@ -134,7 +146,7 @@ case "$TIER" in
         ;;
 esac
 
-az apim subscription create \
+az_or_dry apim subscription create \
     --resource-group "$RESOURCE_GROUP" \
     --service-name "$APIM_NAME" \
     --subscription-id "$TENANT_ID" \
@@ -156,7 +168,7 @@ echo -e "${YELLOW}[5/7]${NC} Creating tenant storage container..."
 STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-secbspsaprod}"
 CONTAINER_NAME="tenant-${TENANT_ID}"
 
-az storage container create \
+az_or_dry storage container create \
     --account-name "$STORAGE_ACCOUNT" \
     --name "$CONTAINER_NAME" \
     --auth-mode login \

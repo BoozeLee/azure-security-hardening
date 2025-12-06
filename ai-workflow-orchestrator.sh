@@ -128,19 +128,24 @@ stage_testing() {
 stage_deployment() {
     notify_status "DEPLOYMENT" "STARTED" "Beginning deployment phase"
 
-    # Incorporate existing deployment scripts
-    for script in $DEPLOY_SCRIPTS; do
-        if [ -f "${SCRIPT_DIR}/${script}" ]; then
-            log "INFO" "Deployment: Running ${script}"
-            if ! bash "${SCRIPT_DIR}/${script}"; then
-                log "ERROR" "Deployment failed at ${script}"
-                notify_status "DEPLOYMENT" "FAILED" "Deployment failed at ${script}"
-                return 1
+    # Incorporate existing deployment scripts unless we are in dry-run
+    if [ "${QWE_DRY_RUN:-false}" = "true" ]; then
+        log "INFO" "QWE_DRY_RUN is true; skipping actual deployment scripts: ${DEPLOY_SCRIPTS}"
+        notify_status "DEPLOYMENT" "SKIPPED" "Dry-run mode - deployment scripts not executed"
+    else
+        for script in $DEPLOY_SCRIPTS; do
+            if [ -f "${SCRIPT_DIR}/${script}" ]; then
+                log "INFO" "Deployment: Running ${script}"
+                if ! bash "${SCRIPT_DIR}/${script}"; then
+                    log "ERROR" "Deployment failed at ${script}"
+                    notify_status "DEPLOYMENT" "FAILED" "Deployment failed at ${script}"
+                    return 1
+                fi
+            else
+                log "WARN" "Deployment script ${script} not found"
             fi
-        else
-            log "WARN" "Deployment script ${script} not found"
-        fi
-    done
+        done
+    fi
 
     # Integration hook for Raptor CLI
     log "INFO" "Deployment: Configuring Raptor CLI"

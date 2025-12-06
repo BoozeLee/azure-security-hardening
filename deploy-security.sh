@@ -12,6 +12,11 @@ if [ -f "${PWD}/scripts/qwe-sh" ]; then
     send_qwe "Starting Azure Security hardening deployment: ${DEPLOYMENT_NAME:-unknown}"
 fi
 
+# Fallback az_or_dry to call az if helper isn't present
+if ! declare -f az_or_dry >/dev/null 2>&1; then
+    az_or_dry() { command az "$@"; }
+fi
+
 echo "🚨 URGENT: Starting Azure Security Hardening Deployment"
 echo "📧 Security Contact: kiliaan@bakerstreetproject.com"
 echo "🌍 Region: West Europe"
@@ -33,14 +38,14 @@ fi
 
 # Check authentication
 echo "🔑 Checking Azure authentication..."
-if ! az account show &> /dev/null; then
+if ! az_or_dry account show &> /dev/null; then
     echo "❌ Not logged into Azure. Please run: az login"
     exit 1
 fi
 
 # Set subscription context
 if [ -n "$SUBSCRIPTION_ID" ]; then
-    az account set --subscription "$SUBSCRIPTION_ID"
+    az_or_dry account set --subscription "$SUBSCRIPTION_ID"
     echo "✅ Subscription context set: $SUBSCRIPTION_ID"
 else
     echo "⚠️  Using default subscription. Set AZURE_SUBSCRIPTION_ID if needed."
@@ -48,13 +53,13 @@ fi
 
 # Install required Azure CLI extensions
 echo "🔧 Installing Azure CLI extensions..."
-az extension add --name security --only-show-errors || true
-az extension add --name log-analytics --only-show-errors || true
-az extension add --name policy-insights --only-show-errors || true
+az_or_dry extension add --name security --only-show-errors || true
+az_or_dry extension add --name log-analytics --only-show-errors || true
+az_or_dry extension add --name policy-insights --only-show-errors || true
 
 # Validate Bicep template
 echo "🔍 Validating Bicep templates..."
-az deployment sub validate \
+az_or_dry deployment sub validate \
     --location "$LOCATION" \
     --template-file infra/main.bicep \
     --parameters @infra/main.parameters.json
@@ -63,7 +68,7 @@ echo "✅ Template validation successful"
 
 # Preview deployment (What-If)
 echo "📋 Running deployment preview (What-If)..."
-az deployment sub what-if \
+az_or_dry deployment sub what-if \
     --location "$LOCATION" \
     --template-file infra/main.bicep \
     --parameters @infra/main.parameters.json
@@ -79,7 +84,7 @@ fi
 # Deploy infrastructure
 echo "🚀 Deploying Azure Security Infrastructure..."
 if type send_qwe >/dev/null 2>&1; then send_qwe "Starting infra deployment: ${DEPLOYMENT_NAME:-unknown}"; fi
-az deployment sub create \
+az_or_dry deployment sub create \
     --name "$DEPLOYMENT_NAME" \
     --location "$LOCATION" \
     --template-file infra/main.bicep \
@@ -93,43 +98,43 @@ if type send_qwe >/dev/null 2>&1; then send_qwe "Infrastructure deployment compl
 echo "🛡️ Enabling Microsoft Defender for Cloud (All Services)..."
 
 # Enable Defender for Virtual Machines
-az security pricing create --name VirtualMachines --tier Standard || echo "⚠️ VirtualMachines already configured"
+az_or_dry security pricing create --name VirtualMachines --tier Standard || echo "⚠️ VirtualMachines already configured"
 
 # Enable Defender for Storage
-az security pricing create --name StorageAccounts --tier Standard || echo "⚠️ StorageAccounts already configured"
+az_or_dry security pricing create --name StorageAccounts --tier Standard || echo "⚠️ StorageAccounts already configured"
 
 # Enable Defender for Key Vault
-az security pricing create --name KeyVaults --tier Standard || echo "⚠️ KeyVaults already configured"
+az_or_dry security pricing create --name KeyVaults --tier Standard || echo "⚠️ KeyVaults already configured"
 
 # Enable Defender for Resource Manager
-az security pricing create --name Arm --tier Standard || echo "⚠️ Arm already configured"
+az_or_dry security pricing create --name Arm --tier Standard || echo "⚠️ Arm already configured"
 
 # Enable Defender for DNS
-az security pricing create --name Dns --tier Standard || echo "⚠️ DNS already configured"
+az_or_dry security pricing create --name Dns --tier Standard || echo "⚠️ DNS already configured"
 
 # Enable Defender for Container Registry
-az security pricing create --name ContainerRegistry --tier Standard || echo "⚠️ ContainerRegistry already configured"
+az_or_dry security pricing create --name ContainerRegistry --tier Standard || echo "⚠️ ContainerRegistry already configured"
 
 echo "✅ Microsoft Defender for Cloud enabled"
 if type send_qwe >/dev/null 2>&1; then send_qwe "Microsoft Defender for Cloud enabled"; fi
 
 # Configure auto-provisioning
 echo "⚙️ Configuring Security Center auto-provisioning..."
-az security auto-provisioning-setting update --name default --auto-provision on
+az_or_dry security auto-provisioning-setting update --name default --auto-provision on
 
 # Wait for resources to be available
 echo "⏳ Waiting for resources to be available..."
 sleep 30
 
 # Get resource details
-STORAGE_ACCOUNT_NAME=$(az storage account list --resource-group "$RESOURCE_GROUP" --query "[?starts_with(name, 'secbspsaprod')].name" -o tsv 2>/dev/null || echo "")
-KEY_VAULT_NAME=$(az keyvault list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv 2>/dev/null || echo "")
+STORAGE_ACCOUNT_NAME=$(az_or_dry storage account list --resource-group "$RESOURCE_GROUP" --query "[?starts_with(name, 'secbspsaprod')].name" -o tsv 2>/dev/null || echo "")
+KEY_VAULT_NAME=$(az_or_dry keyvault list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv 2>/dev/null || echo "")
 
 # Configure network security
 echo "🔐 Configuring network security restrictions..."
 
 if [ -n "$STORAGE_ACCOUNT_NAME" ]; then
-    az storage account update \
+    az_or_dry storage account update \
         --name "$STORAGE_ACCOUNT_NAME" \
         --resource-group "$RESOURCE_GROUP" \
         --public-network-access Disabled
@@ -139,7 +144,7 @@ else
 fi
 
 if [ -n "$KEY_VAULT_NAME" ]; then
-    az keyvault update \
+    az_or_dry keyvault update \
         --name "$KEY_VAULT_NAME" \
         --resource-group "$RESOURCE_GROUP" \
         --public-network-access Disabled
@@ -158,15 +163,15 @@ echo "📄 Generating security compliance report..."
     echo ""
     
     echo "=== DEFENDER FOR CLOUD STATUS ==="
-    az security pricing list --query "[].{Service:name,Tier:pricingTier}" -o table
+    az_or_dry security pricing list --query "[].{Service:name,Tier:pricingTier}" -o table
     echo ""
     
     echo "=== POLICY COMPLIANCE SUMMARY ==="
-    az policy assignment list --resource-group "$RESOURCE_GROUP" --query "[].{Name:displayName,EnforcementMode:enforcementMode}" -o table
+    az_or_dry policy assignment list --resource-group "$RESOURCE_GROUP" --query "[].{Name:displayName,EnforcementMode:enforcementMode}" -o table
     echo ""
     
     echo "=== RESOURCE SUMMARY ==="
-    az resource list --resource-group "$RESOURCE_GROUP" --query "[].{Name:name,Type:type,Location:location}" -o table
+    az_or_dry resource list --resource-group "$RESOURCE_GROUP" --query "[].{Name:name,Type:type,Location:location}" -o table
     
 } > security-report.txt
 

@@ -58,11 +58,24 @@ if __name__ == '__main__':
     sp_list = subparsers.add_parser('list')
     sp_list.add_argument('--server', default='http://localhost:9001')
 
+    sp_create = subparsers.add_parser('create-agent')
+    sp_create.add_argument('name', help='Agent name to create under tools/qwe/agents')
+    sp_create.add_argument('--channel', default='agents', help='Channel name for the agent')
+    sp_create.add_argument('--path', default='.', help='Repo root path (defaults to current working directory)')
+
     args = parser.parse_args()
     if args.cmd == 'send':
         sys.exit(send_message(args.server, args.channel, args.message, agent=args.agent, token=args.token))
     elif args.cmd == 'list':
         sys.exit(list_messages(args.server))
+    elif args.cmd == 'create-agent':
+        try:
+            from tools.qwe.agent_gen import create_agent
+        except Exception:
+            # Try local import (if running from the tools/qwe dir)
+            from agent_gen import create_agent
+        create_agent(args.name, args.channel, repo_root=Path(args.path))
+        sys.exit(0)
     else:
         parser.print_help()
         sys.exit(1)

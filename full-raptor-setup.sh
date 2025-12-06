@@ -27,7 +27,7 @@ fi
 
 # Pre-check gh auth
 info "Checking gh authentication..."
-if ! gh auth status --hostname github.com &>/dev/null; then
+if ! gh_or_dry auth status --hostname github.com &>/dev/null; then
   abort "Please run 'gh auth login' and authenticate with an org admin account."
 fi
 
@@ -39,7 +39,7 @@ if [ -z "$ORG" ]; then
     echo "Install jq (apt install jq | brew install jq) or set ORG env var, e.g.: export ORG=your-org"
     abort "Missing 'jq' dependency. Set ORG and try again."
   fi
-  ORG_LIST=$(gh api /user/orgs --method GET 2>/dev/null || echo "[]")
+  ORG_LIST=$(gh_or_dry api /user/orgs --method GET 2>/dev/null || echo "[]")
   ORG=$(echo "$ORG_LIST" | jq -r '.[0].login // empty')
   if [ -z "$ORG" ]; then
     abort "Could not detect an organization. Set ORG environment variable to the target GitHub org (e.g., export ORG=your-org)."
@@ -48,13 +48,13 @@ if [ -z "$ORG" ]; then
 fi
 
 info "Checking we can access org: $ORG"
-if ! gh api /orgs/$ORG --method GET &>/dev/null; then
+if ! gh_or_dry api /orgs/$ORG --method GET &>/dev/null; then
   abort "Cannot access org '${ORG}' (no permission or org does not exist). Ensure you are org admin and ORG is correct."
 fi
 
 # List providers
 info "Listing AI providers for org $ORG..."
-PROVIDERS_JSON=$(gh api /orgs/$ORG/ai/providers --method GET 2>/dev/null || echo "")
+PROVIDERS_JSON=$(gh_or_dry api /orgs/$ORG/ai/providers --method GET 2>/dev/null || echo "")
 if [ -z "$PROVIDERS_JSON" ] || echo "$PROVIDERS_JSON" | jq -e '.message? // empty' &>/dev/null; then
   echo "\n\033[0;33mModel-hosting API not available (404) or no providers listed. Please add an Azure/OpenAI provider in the Copilot Admin UI: Organization -> Settings -> Copilot -> Model hosting -> Providers.\033[0m"
   abort "Model-hosting API not accessible. Add provider via UI then re-run the script."
@@ -75,7 +75,7 @@ info "Creating org secret: $SECRET_NAME"
 # Create a JSON secret with endpoint and API Key
 SECRET_JSON=$(jq -nc --arg k "$AZURE_OPENAI_KEY" --arg e "$AZURE_OPENAI_ENDPOINT" '{type:"azure_openai", api_key:$k, endpoint:$e}')
 # Create secret (org-level)
-gh secret set "$SECRET_NAME" --org "$ORG" --body "$SECRET_JSON"
+gh_or_dry secret set "$SECRET_NAME" --org "$ORG" --body "$SECRET_JSON"
 if type send_qwe >/dev/null 2>&1; then send_qwe "Saved Azure OpenAI credentials as org secret: $SECRET_NAME for $ORG"; fi
 
 # Validate secret
@@ -92,7 +92,7 @@ echo "$MODEL_PAYLOAD" > /tmp/model_payload.json
 info "Registering model with provider $PROVIDER_ID..."
 if type send_qwe >/dev/null 2>&1; then send_qwe "Registering model ${MODEL_NAME} with provider ${PROVIDER_ID}"; fi
 set +e
-REGISTER_RESPONSE=$(gh api --method POST /orgs/$ORG/ai/providers/${PROVIDER_ID}/models --input /tmp/model_payload.json 2>&1)
+REGISTER_RESPONSE=$(gh_or_dry api --method POST /orgs/$ORG/ai/providers/${PROVIDER_ID}/models --input /tmp/model_payload.json 2>&1)
 RC=$?
 set -e
 
@@ -110,7 +110,7 @@ fi
 MODEL_ID=$(echo "$REGISTER_RESPONSE" | jq -r '.id // .modelId // .name // empty' )
 if [ -z "$MODEL_ID" ]; then
   # If command printed no JSON (e.g., CLI outputs message), try fetch models list to find our new model
-  MODEL_ID=$(gh api /orgs/$ORG/ai/providers/${PROVIDER_ID}/models --method GET --jq '.[] | select(.model_name=="'$MODEL_NAME'") | .id' | head -n1 || true)
+  MODEL_ID=$(gh_or_dry api /orgs/$ORG/ai/providers/${PROVIDER_ID}/models --method GET --jq '.[] | select(.model_name=="'$MODEL_NAME'") | .id' | head -n1 || true)
 fi
 
 if [ -z "$MODEL_ID" ]; then
@@ -123,7 +123,7 @@ if type send_qwe >/dev/null 2>&1; then send_qwe "Model registered successfully: 
 info "Ensuring model is set as org default..."
 PATCH_PAYLOAD=$(jq -nc --argjson p '{is_default: true}' '$p')
 set +e
-gh api --method PATCH /orgs/$ORG/ai/providers/${PROVIDER_ID}/models/${MODEL_ID} --input <(echo "$PATCH_PAYLOAD") >/dev/null 2>&1
+gh_or_dry api --method PATCH /orgs/$ORG/ai/providers/${PROVIDER_ID}/models/${MODEL_ID} --input <(echo "$PATCH_PAYLOAD") >/dev/null 2>&1
 PATCH_RC=$?
 set -e
 if [ $PATCH_RC -eq 0 ]; then
@@ -134,7 +134,7 @@ fi
 
 # Validate: list models
 info "Listing provider models (to confirm):"
-gh api /orgs/$ORG/ai/providers/${PROVIDER_ID}/models --method GET --jq '.[] | {id: .id, model_name: .model_name, display_name: .display_name, visibility: .visibility, is_default: .is_default}'
+gh_or_dry api /orgs/$ORG/ai/providers/${PROVIDER_ID}/models --method GET --jq '.[] | {id: .id, model_name: .model_name, display_name: .display_name, visibility: .visibility, is_default: .is_default}'
 
 success "Raptor mini model automation complete."
 if type send_qwe >/dev/null 2>&1; then send_qwe "Raptor mini model automation complete for ORG=${ORG}"; fi

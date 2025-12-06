@@ -25,14 +25,14 @@ echo ""
 
 # Check Azure authentication
 echo "🔑 Checking Azure authentication..."
-if ! az account show &>/dev/null; then
+if ! az_or_dry account show &>/dev/null; then
     echo "❌ Not authenticated. Logging in..."
-    az login
+    az_or_dry login
 fi
 
 # Check for active subscription
 echo "📋 Checking for active subscription..."
-SUBSCRIPTION_COUNT=$(az account list --query "length([?state=='Enabled'])" --output tsv)
+SUBSCRIPTION_COUNT=$(az_or_dry account list --query "length([?state=='Enabled'])" --output tsv)
 if [ "$SUBSCRIPTION_COUNT" -eq 0 ]; then
     echo "❌ No active subscription found!"
     echo "🎯 Please activate your Visual Studio Azure benefits at:"
@@ -41,8 +41,8 @@ if [ "$SUBSCRIPTION_COUNT" -eq 0 ]; then
 fi
 
 # Get subscription info
-SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
-SUBSCRIPTION_NAME=$(az account show --query "name" --output tsv)
+SUBSCRIPTION_ID=$(az_or_dry account show --query "id" --output tsv)
+SUBSCRIPTION_NAME=$(az_or_dry account show --query "name" --output tsv)
 
 echo "✅ Found subscription: $SUBSCRIPTION_NAME"
 echo "🆔 Subscription ID: $SUBSCRIPTION_ID"
@@ -62,12 +62,12 @@ echo ""
 
 # Create resource group
 echo "📦 Creating resource group..."
-az group create --name $RESOURCE_GROUP --location $LOCATION
+az_or_dry group create --name $RESOURCE_GROUP --location $LOCATION
 
 # Deploy main security infrastructure
 echo "🚀 Deploying main security infrastructure..."
 if type send_qwe >/dev/null 2>&1; then send_qwe "Deploying main security infrastructure: $DEPLOYMENT_NAME"; fi
-az deployment group create \
+az_or_dry deployment group create \
     --resource-group $RESOURCE_GROUP \
     --template-file infra/main-simple.bicep \
     --name $DEPLOYMENT_NAME \
@@ -75,33 +75,33 @@ az deployment group create \
 
 # Enable Azure Security Center / Microsoft Defender
 echo "🛡️ Enabling Microsoft Defender for Cloud..."
-az security pricing create \
+az_or_dry security pricing create \
     --name "VirtualMachines" \
     --tier "Standard" || echo "⚠️ Defender pricing may require specific subscription type"
 
-az security pricing create \
+az_or_dry security pricing create \
     --name "StorageAccounts" \
     --tier "Standard" || echo "⚠️ Defender pricing may require specific subscription type"
 
-az security pricing create \
+az_or_dry security pricing create \
     --name "KeyVaults" \
     --tier "Standard" || echo "⚠️ Defender pricing may require specific subscription type"
 
 # Enable diagnostic settings
 echo "📊 Configuring diagnostic logging..."
-LOG_ANALYTICS_ID=$(az monitor log-analytics workspace show \
+LOG_ANALYTICS_ID=$(az_or_dry monitor log-analytics workspace show \
     --resource-group $RESOURCE_GROUP \
     --workspace-name "law-security-hardening" \
     --query "id" --output tsv)
 
 # Get Key Vault ID
-KEYVAULT_ID=$(az keyvault list \
+KEYVAULT_ID=$(az_or_dry keyvault list \
     --resource-group $RESOURCE_GROUP \
     --query "[0].id" --output tsv)
 
 if [ ! -z "$KEYVAULT_ID" ]; then
     echo "🔑 Enabling Key Vault diagnostic logging..."
-    az monitor diagnostic-settings create \
+    az_or_dry monitor diagnostic-settings create \
         --resource $KEYVAULT_ID \
         --name "keyvault-diagnostics" \
         --workspace $LOG_ANALYTICS_ID \
@@ -111,7 +111,7 @@ fi
 
 # Configure security policies
 echo "📋 Configuring security policies..."
-az policy assignment create \
+az_or_dry policy assignment create \
     --name "require-https-storage" \
     --display-name "Require HTTPS for storage accounts" \
     --policy "/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9" \
@@ -119,7 +119,7 @@ az policy assignment create \
 
 # Create security alerts
 echo "🚨 Setting up security alerts..."
-az monitor action-group create \
+az_or_dry monitor action-group create \
     --resource-group $RESOURCE_GROUP \
     --name "security-alerts" \
     --short-name "SecAlerts" || echo "⚠️ Action group may already exist"

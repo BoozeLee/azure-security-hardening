@@ -16,6 +16,19 @@ echo -e "${BLUE}║   🚀 Complete SaaS Platform Deployment                 ║
 echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
+# Source qwe helper for dry-run support if available
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+    # shellcheck source=/dev/null
+    source "${PWD}/scripts/qwe-sh"
+    export QWE_AGENT="saas-deploy-full"
+    send_qwe "Starting SaaS full deployment: ${DEPLOYMENT_NAME:-unknown}"
+fi
+
+# Fallback az_or_dry
+if ! declare -f az_or_dry >/dev/null 2>&1; then
+    az_or_dry() { command az "$@"; }
+fi
+
 # Check prerequisites
 echo -e "${YELLOW}Checking prerequisites...${NC}"
 if ! command -v az &> /dev/null; then
@@ -23,7 +36,7 @@ if ! command -v az &> /dev/null; then
     exit 1
 fi
 
-if ! az account show &> /dev/null; then
+if ! az_or_dry account show &> /dev/null; then
     echo -e "${RED}❌ Not logged in to Azure. Run: az login${NC}"
     exit 1
 fi
@@ -78,7 +91,7 @@ echo -e "${YELLOW}🚀 Starting deployment: $DEPLOYMENT_NAME${NC}"
 echo ""
 
 # Deploy infrastructure
-az deployment sub create \
+az_or_dry deployment sub create \
     --name "$DEPLOYMENT_NAME" \
     --location "$LOCATION" \
     --template-file infra/main-saas.bicep \
@@ -100,7 +113,7 @@ if [ $? -eq 0 ]; then
     
     # Get outputs
     echo -e "${BLUE}📊 Deployment Outputs:${NC}"
-    az deployment sub show \
+    az_or_dry deployment sub show \
         --name "$DEPLOYMENT_NAME" \
         --query properties.outputs \
         --output table

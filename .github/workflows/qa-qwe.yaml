@@ -1,0 +1,50 @@
+name: QA - QWE Dry Run
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  qwe-dry-run:
+    name: QWE Dry-Run Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Start QWE background server
+        run: |
+          pushd tools/qwe
+          ./install.sh --dev || true
+          ./start_bg.sh || true
+          popd
+
+      - name: Make fake az/gh and run orchestrator + tests
+        env:
+          QWE_DRY_RUN: "true"
+          QWE_DEBUG: "1"
+          QWE_AGENT: "ci-qwe-dry-run"
+          DEPLOY_SCRIPTS: ":"
+        run: |
+          set -euo pipefail
+          mkdir -p fakebin
+          printf '%s\n' '#!/bin/bash' 'echo "Mock az: $*"' 'exit 0' > fakebin/az
+          printf '%s\n' '#!/bin/bash' 'echo "Mock gh: $*"' 'exit 0' > fakebin/gh
+          chmod +x fakebin/az fakebin/gh
+          PATH="$PWD/fakebin:$PATH"
+          # Run orchestrator (skip deploy scripts)
+          bash ./ai-workflow-orchestrator.sh || true
+          # Run unit tests
+          pytest -q tools/qwe/tests -k "not slow"

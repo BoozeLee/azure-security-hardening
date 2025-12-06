@@ -9,20 +9,25 @@ if [ -f "${PWD}/scripts/qwe-sh" ]; then
     send_qwe "Starting MINIMAL COST deployment: ${RG_NAME:-rg-security-minimal}"
 fi
 
+# Fallback az_or_dry to invoke az if helper isn't present
+if ! declare -f az_or_dry >/dev/null 2>&1; then
+    az_or_dry() { command az "$@"; }
+fi
+
 echo "🚀 COST-OPTIMIZED AZURE SECURITY DEPLOYMENT"
 echo "📧 Account: bakerstreetbandit@hotmail.com"
 echo "💰 Mode: MINIMAL COST (Pay-as-you-go safe)"
 echo ""
 
 # Check authentication
-if ! az account show &>/dev/null; then
+if ! az_or_dry account show &>/dev/null; then
     echo "❌ Not logged in. Run: az login"
     exit 1
 fi
 
 # Get subscription info
-SUB_ID=$(az account show --query "id" --output tsv)
-SUB_NAME=$(az account show --query "name" --output tsv)
+SUB_ID=$(az_or_dry account show --query "id" --output tsv)
+SUB_NAME=$(az_or_dry account show --query "name" --output tsv)
 
 echo "✅ Using subscription: $SUB_NAME"
 echo "🆔 Subscription ID: $SUB_ID"
@@ -32,7 +37,7 @@ RG_NAME="rg-security-minimal"
 LOCATION="westeurope"
 
 echo "📦 Creating resource group: $RG_NAME"
-az group create --name "$RG_NAME" --location "$LOCATION"
+az_or_dry group create --name "$RG_NAME" --location "$LOCATION"
 
 # Generate unique names
 TIMESTAMP=$(date +%s)
@@ -45,7 +50,7 @@ echo "💰 Estimated monthly cost: $5-15 USD"
 
 # Create Key Vault (Basic tier - lowest cost)
 echo "🔑 Creating Key Vault (Basic tier)..."
-az keyvault create \
+az_or_dry keyvault create \
     --name "$KV_NAME" \
     --resource-group "$RG_NAME" \
     --location "$LOCATION" \
@@ -55,7 +60,7 @@ az keyvault create \
 
 # Create Storage Account (Standard LRS - lowest cost)
 echo "💾 Creating Storage Account (Standard LRS)..."
-az storage account create \
+az_or_dry storage account create \
     --name "$ST_NAME" \
     --resource-group "$RG_NAME" \
     --location "$LOCATION" \
@@ -67,7 +72,7 @@ az storage account create \
 
 # Create Log Analytics Workspace (Pay-per-GB - cost controlled)
 echo "📊 Creating Log Analytics Workspace..."
-az monitor log-analytics workspace create \
+az_or_dry monitor log-analytics workspace create \
     --workspace-name "law-minimal-security" \
     --resource-group "$RG_NAME" \
     --location "$LOCATION" \

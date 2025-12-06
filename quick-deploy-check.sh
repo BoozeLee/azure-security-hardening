@@ -5,10 +5,22 @@
 echo "⚡ QUICK AZURE SUBSCRIPTION CHECK"
 echo "================================"
 
+# Source helper if present
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+    # shellcheck source=/dev/null
+    source "${PWD}/scripts/qwe-sh"
+    export QWE_AGENT="quick-deploy-check"
+fi
+
+# Fallback az_or_dry
+if ! declare -f az_or_dry >/dev/null 2>&1; then
+    az_or_dry() { command az "$@"; }
+fi
+
 # Test Azure authentication and subscription
-if az account show &>/dev/null; then
-    SUBSCRIPTION_NAME=$(az account show --query "name" --output tsv)
-    SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
+if az_or_dry account show &>/dev/null; then
+        SUBSCRIPTION_NAME=$(az_or_dry account show --query "name" --output tsv)
+        SUBSCRIPTION_ID=$(az_or_dry account show --query "id" --output tsv)
     
     if [[ "$SUBSCRIPTION_NAME" != *"N/A"* ]]; then
         echo "✅ ACTIVE SUBSCRIPTION DETECTED!"

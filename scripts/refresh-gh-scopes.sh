@@ -26,6 +26,18 @@ if ! command -v az &> /dev/null; then
     exit 1
 fi
 
+# Source qwe helper if available
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+    # shellcheck source=/dev/null
+    source "${PWD}/scripts/qwe-sh"
+    export QWE_AGENT="refresh-gh-scopes"
+fi
+
+# Fallback az_or_dry
+if ! declare -f az_or_dry >/dev/null 2>&1; then
+    az_or_dry() { command az "$@"; }
+fi
+
 # Verify GitHub authentication
 echo "🔍 Verifying GitHub authentication..."
 if ! gh auth status &> /dev/null; then
@@ -116,7 +128,7 @@ if [ -n "$AZURE_CLIENT_ID" ] && [ -n "$AZURE_TENANT_ID" ] && [ -n "$AZURE_SUBSCR
     echo "🔍 Validating Azure federated credentials..."
     
     # Check if logged in to Azure
-    if az account show &> /dev/null; then
+    if az_or_dry account show &> /dev/null; then
         # Try to get the app registration
         APP_INFO=$(az ad app show --id "$AZURE_CLIENT_ID" 2>/dev/null || echo "")
         

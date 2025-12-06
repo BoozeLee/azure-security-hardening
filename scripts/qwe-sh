@@ -37,6 +37,31 @@ az_or_dry() {
       echo "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/rg/workspaces/law"
       return 0
     fi
+    # simulate storage account list returning a name
+    if printf "%s\n" "$*" | grep -q "storage account list --resource-group"; then
+      echo "[\"secbspsaprod01\"]"
+      return 0
+    fi
+    # simulate keyvault list returning a name
+    if printf "%s\n" "$*" | grep -q "keyvault list --resource-group"; then
+      echo "[\"sec-keyvault-01\"]"
+      return 0
+    fi
+    # simulate security pricing list
+    if printf "%s\n" "$*" | grep -q "security pricing list"; then
+      echo '[{"Service":"VirtualMachines","Tier":"Standard"}]'
+      return 0
+    fi
+    # policy assignments
+    if printf "%s\n" "$*" | grep -q "policy assignment list"; then
+      echo '[{"Name":"EnforcePolicy","EnforcementMode":"Default"}]'
+      return 0
+    fi
+    # resource list
+    if printf "%s\n" "$*" | grep -q "resource list --resource-group"; then
+      echo '[{"Name":"sec-resource","Type":"Microsoft.Storage/storageAccounts","Location":"westeurope"}]'
+      return 0
+    fi
     # For other commands, provide a benign output
     return 0
   fi
@@ -50,6 +75,11 @@ gh_or_dry() {
     # Build a simple echo-based simulation for common gh commands
     if [ "$1" = "auth" ]; then
       echo "Mock gh auth status"
+      return 0
+    fi
+    if [ "$1" = "secret" ] && [ "$2" = "set" ]; then
+      # mimic gh secret set behavior returning success
+      echo "Secret set: $*"
       return 0
     fi
     if [ "$1" = "api" ]; then
