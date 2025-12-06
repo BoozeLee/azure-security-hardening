@@ -19,6 +19,70 @@ QWE_DRY_RUN="${QWE_DRY_RUN:-false}"
 QWE_DEBUG="${QWE_DEBUG:-0}"
 QWE_LOG_FILE="${QWE_LOG_FILE:-/tmp/qwe_send.log}"
 
+# Wrapper for az that is dry-run aware and can mock responses
+az_or_dry() {
+  # Return simulated outputs for key queries in dry-run
+  if [ "${QWE_DRY_RUN:-false}" = "true" ]; then
+    echo "Mock az: $*"
+    # Simulate some queries that scripts expect to parse
+    if printf "%s\n" "$*" | grep -q "account show --query id"; then
+      echo "00000000-0000-0000-0000-000000000000"
+      return 0
+    fi
+    if printf "%s\n" "$*" | grep -q "account list --query"; then
+      echo "1"
+      return 0
+    fi
+    if printf "%s\n" "$*" | grep -q "log-analytics workspace show --query id"; then
+      echo "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/rg/workspaces/law"
+      return 0
+    fi
+    # For other commands, provide a benign output
+    return 0
+  fi
+  # Not in dry-run: call actual az
+  command az "$@"
+}
+
+# Wrapper for gh that can simulate GitHub Copilot provider/model API in dry-run
+gh_or_dry() {
+  if [ "${QWE_DRY_RUN:-false}" = "true" ] || [ "${USE_LOCAL_COPILOT:-false}" = "true" ]; then
+    # Build a simple echo-based simulation for common gh commands
+    if [ "$1" = "auth" ]; then
+      echo "Mock gh auth status"
+      return 0
+    fi
+    if [ "$1" = "api" ]; then
+      shift
+      # capture path
+      if printf "%s\n" "$*" | grep -qE "^/user/orgs"; then
+        # return a minimal JSON list
+        echo '[{"login":"mock-org"}]'
+        return 0
+      fi
+      if printf "%s\n" "$*" | grep -q "POST /orgs/" && printf "%s\n" "$*" | grep -q "/ai/providers"; then
+        # reply with a fake provider id
+        echo '{"id":"provider-mock-123","name":"Mock Azure OpenAI"}'
+        return 0
+      fi
+      if printf "%s\n" "$*" | grep -q "/ai/providers/" && printf "%s\n" "$*" | grep -q "/models" && printf "%s\n" "$*" | grep -q "GET"; then
+        # return a list of fake models
+        echo '[{"id":"model-mock-1","model_name":"microsoft/raptor-mini-preview","display_name":"Mock Raptor","is_default":false}]'
+        return 0
+      fi
+      # default: echo the command
+      echo "Mock gh api $*"
+      return 0
+    fi
+    # Default fallback for other gh commands
+    echo "Mock gh: $*"
+    return 0
+  fi
+  # Not in dry-run: call actual gh
+  command gh "$@"
+}
+
+
 _qwe_log() {
   if [ "$QWE_DEBUG" -eq 1 ]; then
     echo "[qwe-sh] $*" >&2
