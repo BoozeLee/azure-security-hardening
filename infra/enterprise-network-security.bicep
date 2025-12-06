@@ -370,7 +370,7 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
               }
             ]
             operator: 'Contains'
-            negationCondition: false
+            negationConditon: false  // Note: API uses typo "negationConditon" instead of "negationCondition"
             matchValues: [
               'bot'
               'crawler'
@@ -397,7 +397,7 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
               }
             ]
             operator: 'IPMatch'
-            negationCondition: false
+            negationConditon: false  // Note: API uses typo "negationConditon" instead of "negationCondition"
             matchValues: [
               '0.0.0.0/0'
             ]

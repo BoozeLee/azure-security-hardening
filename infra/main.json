@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "13072950996969731926"
+      "templateHash": "1175105129983117618"
     }
   },
   "parameters": {
@@ -1941,7 +1941,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "8250533412468506951"
+              "templateHash": "8398001630807209557"
             }
           },
           "parameters": {
@@ -2338,7 +2338,7 @@
                           }
                         ],
                         "operator": "Contains",
-                        "negationCondition": false,
+                        "negationConditon": false,
                         "matchValues": [
                           "bot",
                           "crawler",
@@ -2365,7 +2365,7 @@
                           }
                         ],
                         "operator": "IPMatch",
-                        "negationCondition": false,
+                        "negationConditon": false,
                         "matchValues": [
                           "0.0.0.0/0"
                         ]
