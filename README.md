@@ -102,6 +102,8 @@ azure-security-hardening/
 │   └── azure-policy.bicep     # Automated compliance
 ├── auto-deploy-azure-security.sh  # One-command deployment
 └── deploy-*.sh                # Specialized deployment scripts
+├── scripts/qwe-sh             # Centralized helper for QWE notifications
+├── tools/qwe                  # Local agent communicator (Flask server + CLI)
 ```
 
 ## 💼 Enterprise Solutions

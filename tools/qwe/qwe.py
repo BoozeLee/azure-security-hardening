@@ -11,11 +11,19 @@ import argparse
 import requests
 import sys
 
-def send_message(server, channel, message):
+def send_message(server, channel, message, agent='unknown', token=''):
     url = server.rstrip('/') + '/api/v1/agents/message'
-    resp = requests.post(url, json={'channel': channel, 'message': message})
+    headers = {'Content-Type': 'application/json'}
+    if token:
+        headers['Authorization'] = f'Bearer {token}'
+    payload = {'channel': channel, 'message': message, 'agent': agent}
+    resp = requests.post(url, json=payload, headers=headers)
     if resp.status_code in (200, 201):
-        print('Message sent')
+        try:
+            j = resp.json()
+            print('Message sent:', j)
+        except Exception:
+            print('Message sent')
         return 0
     else:
         print('Failed to send message:', resp.status_code, resp.text)
@@ -43,6 +51,8 @@ if __name__ == '__main__':
     sp_send = subparsers.add_parser('send')
     sp_send.add_argument('--channel', default='agents')
     sp_send.add_argument('--message', required=True)
+        sp_send.add_argument('--agent', default='unknown')
+        sp_send.add_argument('--token', default='')
     sp_send.add_argument('--server', default='http://localhost:9001')
 
     sp_list = subparsers.add_parser('list')
@@ -50,7 +60,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.cmd == 'send':
-        sys.exit(send_message(args.server, args.channel, args.message))
+            sys.exit(send_message(args.server, args.channel, args.message, agent=args.agent, token=args.token))
     elif args.cmd == 'list':
         sys.exit(list_messages(args.server))
     else:

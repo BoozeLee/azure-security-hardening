@@ -21,6 +21,14 @@ if ! command -v gh &> /dev/null; then
     exit 1
 fi
 
+# Try to source centralized qwe helper
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+    # shellcheck source=/dev/null
+    source "${PWD}/scripts/qwe-sh"
+    export QWE_AGENT="trigger-security-deployment"
+    send_qwe "Triggering security deployment GitHub Action for repo $(gh repo view --json owner,name -q '.owner.login + "/" + .name')"
+fi
+
 # Check if we're in a git repository
 if ! git rev-parse --is-inside-work-tree &> /dev/null; then
     echo "❌ Not in a git repository. Please initialize git and push to GitHub:"
@@ -45,6 +53,7 @@ echo "🚀 Triggering Azure Security Hardening workflow..."
 gh workflow run "azure-security-hardening.yml" --field environment=prod
 
 echo "✅ GitHub Actions workflow triggered successfully!"
+if type send_qwe >/dev/null 2>&1; then send_qwe "GitHub Actions workflow requested: azure-security-hardening.yml"; fi
 echo ""
 echo "🔍 Monitor progress:"
 echo "   gh run watch"

@@ -8,7 +8,10 @@ A tiny local HTTP server and CLI to simulate sending messages between local agen
 - `qwe.py` — CLI client that sends messages to the `server.py` API and lists messages.
 - `requirements.txt` — dependencies for the qwe tool (Flask + requests).
 - `start.sh` — helper to create a virtual environment, install deps, and run the server.
+ - `install.sh` — helper to create a virtual environment and install deps; use `--dev` to install test dependencies.
 - `send.sh` — helper script to send a message using the CLI.
+ - `send.sh` — helper script to send a message using the CLI.
+ - `requirements-dev.txt` — test and dev requirements (pytest, requests-mock).
 - `messages.log` — created automatically by the server on first start.
 
 ## Quick start
@@ -32,6 +35,12 @@ cd tools/qwe
 ./send.sh "Hello world from CLI"
 # or use the CLI directly
 python qwe.py send --message "Hello world" --channel agents --server http://localhost:9001
+```
+
+Optional: include an Authorization token for the server (if configured):
+
+```bash
+python qwe.py send --message "Hello world" --server http://localhost:9001 --agent my-agent --token $QWE_TOKEN
 ```
 
 

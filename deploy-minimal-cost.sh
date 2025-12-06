@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Try to source centralized qwe helper
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+    # shellcheck source=/dev/null
+    source "${PWD}/scripts/qwe-sh"
+    export QWE_AGENT="deploy-minimal-cost"
+    send_qwe "Starting MINIMAL COST deployment: ${RG_NAME:-rg-security-minimal}"
+fi
+
 echo "🚀 COST-OPTIMIZED AZURE SECURITY DEPLOYMENT"
 echo "📧 Account: bakerstreetbandit@hotmail.com"
 echo "💰 Mode: MINIMAL COST (Pay-as-you-go safe)"
@@ -32,6 +40,7 @@ KV_NAME="kv-min${TIMESTAMP:5}"
 ST_NAME="stmin${TIMESTAMP:5}"
 
 echo "🚀 Deploying MINIMAL COST security infrastructure..."
+if type send_qwe >/dev/null 2>&1; then send_qwe "Deploying minimal cost security infra in ${LOCATION:-westeurope} RG=${RG_NAME:-rg-security-minimal}"; fi
 echo "💰 Estimated monthly cost: $5-15 USD"
 
 # Create Key Vault (Basic tier - lowest cost)
@@ -66,6 +75,7 @@ az monitor log-analytics workspace create \
 
 echo ""
 echo "🎉 MINIMAL COST DEPLOYMENT SUCCESSFUL!"
+if type send_qwe >/dev/null 2>&1; then send_qwe "MINIMAL COST deployment successful: KV=${KV_NAME:-unknown} ST=${ST_NAME:-unknown} RG=${RG_NAME:-unknown}"; fi
 echo ""
 echo "📊 DEPLOYED RESOURCES:"
 echo "   🔑 Key Vault: $KV_NAME (Basic tier)"

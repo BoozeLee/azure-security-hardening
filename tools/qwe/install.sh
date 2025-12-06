@@ -9,4 +9,7 @@ fi
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
+if [ "${1:-}" = "--dev" ]; then
+  pip install -r requirements-dev.txt
+fi
 echo "qwe environment installed in ${SCRIPT_DIR}/.venv"

@@ -1,0 +1,3 @@
+#!/bin/bash
+ echo "Mock gh: $*"
+ exit 0

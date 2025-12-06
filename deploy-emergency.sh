@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Try to source centralized qwe helper
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+    # shellcheck source=/dev/null
+    source "${PWD}/scripts/qwe-sh"
+    export QWE_AGENT="deploy-emergency"
+    send_qwe "Starting EMERGENCY deployment in ${LOCATION:-westeurope} RG=${RG_NAME:-rg-emergency-security}"
+fi
+
 echo "🚀 EMERGENCY AZURE SECURITY DEPLOYMENT"
 echo "📧 Account: bakerstreetbandit@hotmail.com"
 echo "💰 COST-CONSCIOUS MODE"
@@ -74,6 +82,7 @@ az storage account create \
 
 echo ""
 echo "🎉 EMERGENCY DEPLOYMENT COMPLETE!"
+if type send_qwe >/dev/null 2>&1; then send_qwe "EMERGENCY deployment complete: KV=${KV_NAME:-unknown} ST=${ST_NAME:-unknown} RG=${RG_NAME:-rg-emergency-security}"; fi
 echo ""
 echo "📊 DEPLOYED:"
 echo "   🔑 Key Vault: $KV_NAME"

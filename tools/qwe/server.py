@@ -14,6 +14,8 @@ from flask import Flask, request, jsonify
 import os
 import json
 from datetime import datetime
+import uuid
+import os
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE = os.path.join(APP_DIR, "messages.log")
@@ -33,9 +35,12 @@ def append_message(channel, message):
         except json.JSONDecodeError:
             messages = []
         messages.append({
+            'id': uuid.uuid4().hex,
             'timestamp': datetime.utcnow().isoformat() + 'Z',
             'channel': channel,
-            'message': message,
+            'agent': message.get('agent') if isinstance(message, dict) and message.get('agent') else 'unknown',
+            'message': message.get('message') if isinstance(message, dict) else message,
+            'meta': message.get('meta') if isinstance(message, dict) and message.get('meta') else None,
         })
         f.seek(0)
         f.truncate(0)
@@ -45,14 +50,27 @@ def append_message(channel, message):
 @app.route('/api/v1/agents/message', methods=['POST'])
 def receive_message():
     try:
+        # Token auth: if server token is set, require Authorization header Bearer <token>
+        server_token = os.getenv('QWE_SERVER_TOKEN', '')
+        if server_token:
+            auth = request.headers.get('Authorization', '')
+            if not auth.startswith('Bearer ') or auth.split(' ', 1)[1] != server_token:
+                return jsonify({'error': 'unauthorized'}), 401
+
         payload = request.json
         if not payload or 'message' not in payload:
             return jsonify({'error': 'invalid payload'}), 400
         channel = payload.get('channel', 'agents')
-        message = payload['message']
+        # Accept agent and optional meta fields
+        message = {
+            'message': payload.get('message'),
+            'agent': payload.get('agent', 'unknown'),
+            'meta': payload.get('meta'),
+        }
         append_message(channel, message)
         print(f"[qwe] Received message on channel={channel} message={message}")
-        return jsonify({'status': 'ok'}), 201
+        # Return a status JSON including a generated message id and the agent
+        return jsonify({'status': 'ok', 'message': 'received', 'agent': message.get('agent'), 'channel': channel, 'message_id': messages[-1].get('id')}), 201
     except Exception as ex:
         print('Error receiving message:', ex)
         return jsonify({'error': str(ex)}), 500

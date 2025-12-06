@@ -9,7 +9,7 @@ if [ -f "${PWD}/scripts/qwe-sh" ]; then
     # shellcheck source=/dev/null
     source "${PWD}/scripts/qwe-sh"
     export QWE_AGENT="deploy-security"
-    send_qwe "Starting Azure Security hardening deployment: $DEPLOYMENT_NAME"
+    send_qwe "Starting Azure Security hardening deployment: ${DEPLOYMENT_NAME:-unknown}"
 fi
 
 echo "🚨 URGENT: Starting Azure Security Hardening Deployment"
@@ -78,7 +78,7 @@ fi
 
 # Deploy infrastructure
 echo "🚀 Deploying Azure Security Infrastructure..."
-if type send_qwe >/dev/null 2>&1; then send_qwe "Starting infra deployment: $DEPLOYMENT_NAME"; fi
+if type send_qwe >/dev/null 2>&1; then send_qwe "Starting infra deployment: ${DEPLOYMENT_NAME:-unknown}"; fi
 az deployment sub create \
     --name "$DEPLOYMENT_NAME" \
     --location "$LOCATION" \
@@ -87,7 +87,7 @@ az deployment sub create \
     --confirm-with-what-if
 
 echo "✅ Infrastructure deployment completed"
-if type send_qwe >/dev/null 2>&1; then send_qwe "Infrastructure deployment completed: $DEPLOYMENT_NAME"; fi
+if type send_qwe >/dev/null 2>&1; then send_qwe "Infrastructure deployment completed: ${DEPLOYMENT_NAME:-unknown}"; fi
 
 # Enable Microsoft Defender for Cloud
 echo "🛡️ Enabling Microsoft Defender for Cloud (All Services)..."
@@ -194,4 +194,4 @@ echo "3. Set up private endpoint connectivity for applications"
 echo "4. Review and respond to any security alerts"
 echo ""
 echo "🚨 Your Azure environment is now hardened against high-threat scenarios."
-if type send_qwe >/dev/null 2>&1; then send_qwe "Azure Security Hardening completed: $DEPLOYMENT_NAME"; fi
+if type send_qwe >/dev/null 2>&1; then send_qwe "Azure Security Hardening completed: ${DEPLOYMENT_NAME:-unknown}"; fi

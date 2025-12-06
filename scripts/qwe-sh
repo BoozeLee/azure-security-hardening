@@ -4,7 +4,8 @@
 ##   source ./scripts/qwe-sh
 ##   send_qwe "Hello world"
 
-set -euo pipefail
+set -e
+set -o pipefail
 
 QWE_URL_DEFAULT="http://127.0.0.1:9001/api/v1/agents/message"
 QWE_URL="${QWE_URL:-${QWE_URL_DEFAULT}}"

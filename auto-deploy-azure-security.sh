@@ -4,6 +4,20 @@
 
 set -e
 
+# Set deployment variables early so they exist before any send_qwe calls
+RESOURCE_GROUP="rg-security-hardening"
+LOCATION="eastus"
+DEPLOYMENT_NAME="security-deployment-$(date +%Y%m%d-%H%M%S)"
+TENANT_ID="${TENANT_ID:-}"
+
+# Try to source centralized qwe helper
+if [ -f "${PWD}/scripts/qwe-sh" ]; then
+    # shellcheck source=/dev/null
+    source "${PWD}/scripts/qwe-sh"
+    export QWE_AGENT="auto-deploy-azure-security"
+    send_qwe "Starting automated azure security deployment: $DEPLOYMENT_NAME in $LOCATION"
+fi
+
 echo "🚀 AUTOMATED AZURE SECURITY DEPLOYMENT"
 echo "💳 Using: Visual Studio Subscription Benefits"
 echo "🔒 Deploying MAXIMUM security infrastructure..."
@@ -52,6 +66,7 @@ az group create --name $RESOURCE_GROUP --location $LOCATION
 
 # Deploy main security infrastructure
 echo "🚀 Deploying main security infrastructure..."
+if type send_qwe >/dev/null 2>&1; then send_qwe "Deploying main security infrastructure: $DEPLOYMENT_NAME"; fi
 az deployment group create \
     --resource-group $RESOURCE_GROUP \
     --template-file infra/main-simple.bicep \
@@ -111,6 +126,7 @@ az monitor action-group create \
 
 echo ""
 echo "🎉 AZURE SECURITY INFRASTRUCTURE DEPLOYED!"
+if type send_qwe >/dev/null 2>&1; then send_qwe "Automated azure security deployment completed: $DEPLOYMENT_NAME"; fi
 echo ""
 echo "✅ Deployed Components:"
 echo "   🔑 Azure Key Vault with HSM backing"
