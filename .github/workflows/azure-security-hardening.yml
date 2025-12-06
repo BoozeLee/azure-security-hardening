@@ -23,6 +23,8 @@ env:
   SECURITY_EMAIL: "kiliaan@bakerstreetproject.com"
   RESOURCE_PREFIX: "sec-bsp"
   ENVIRONMENT: '${{ github.event.inputs.environment || "prod" }}'
+  # Optional webhook for local communicator (qwe) or other HTTP endpoint for notifications
+  QWE_WEBHOOK: ${{ secrets.QWE_WEBHOOK }}
 
 permissions:
   id-token: write # Required for OIDC authentication
@@ -38,6 +40,12 @@ jobs:
     steps:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
+
+      - name: "Notify qwe - deployment starting"
+        if: ${{ secrets.QWE_WEBHOOK != '' }}
+        run: |
+          echo "Notifying qwe webhook of start"
+          curl -s -X POST -H 'Content-Type: application/json' -d '{"channel":"agents","message":"Azure security deployment starting for ${{ env.ENVIRONMENT }} (commit: ${{ github.sha }})"}' "${{ secrets.QWE_WEBHOOK }}" || echo "QWE notify failed"
 
       - name: "Azure Login via OIDC"
         uses: azure/login@v2
@@ -266,6 +274,18 @@ jobs:
           echo "2. Verify all resources in Azure portal"
           echo "3. Test private endpoint connectivity"
           echo "4. Monitor security alerts and recommendations"
+
+      - name: "Notify qwe - deployment success"
+        if: ${{ secrets.QWE_WEBHOOK != '' && success() }}
+        run: |
+          echo "Notifying qwe webhook of success"
+          curl -s -X POST -H 'Content-Type: application/json' -d '{"channel":"agents","message":"Azure security deployment completed for ${{ env.ENVIRONMENT }} (commit: ${{ github.sha }})"}' "${{ secrets.QWE_WEBHOOK }}" || echo "QWE notify failed"
+
+      - name: "Notify qwe - deployment failure"
+        if: ${{ secrets.QWE_WEBHOOK != '' && failure() }}
+        run: |
+          echo "Notifying qwe webhook of failure"
+          curl -s -X POST -H 'Content-Type: application/json' -d '{"channel":"agents","message":"Azure security deployment FAILED for ${{ env.ENVIRONMENT }} (commit: ${{ github.sha }})"}' "${{ secrets.QWE_WEBHOOK }}" || echo "QWE notify failed"
 
       - name: "Upload Security Report as Artifact"
         uses: actions/upload-artifact@v4

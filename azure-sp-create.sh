@@ -7,6 +7,9 @@ set -euo pipefail
 # - STORE_PASSWORD_IN_KEYVAULT=true      -> if a Key Vault name is provided, stores the generated PFX password as a secret in Key Vault
 # - ASSIGN_KEYVAULT_ACCESS_POLICY=true   -> when set will attempt to set an access policy on KeyVault for the newly created SP
 # - STORE_APP_CREDENTIALS_IN_KEYVAULT=true -> store `app_credentials.json` as a Key Vault secret (useful for CI)
+# - ASSIGN_KEYVAULT_RBAC=true -> When set to true, will try to assign Key Vault RBAC role if set-policy fails
+# - ALLOW_KEYVAULT_RBAC_FALLBACK=true -> default true; if false, do not try RBAC role assignment fallback
+# - STRICT_RBAC_ASSIGNMENT=true -> if true and set-policy fails, abort instead of fallback to RBAC
 
 if [ "$#" -lt 1 ]; then
   echo "Usage: $0 <appName> [<keyVaultName>] [<certBaseName>]"
@@ -18,6 +21,17 @@ KEYVAULT_NAME="${2:-""}"
 # Optional third arg to control the certificate name to import into KeyVault
 CERT_BASE_NAME="${3:-""}"
 
+# detect if az ad app credential supports --keyvault binding (not all versions of az cli do)
+SUPPORTS_KEYVAULT_BINDING=false
+if az ad app credential reset -h 2>/dev/null | grep -E -- '--keyvault' >/dev/null 2>&1; then
+  SUPPORTS_KEYVAULT_BINDING=true
+fi
+
+# configuration knobs with safe defaults
+ASSIGN_KEYVAULT_RBAC=${ASSIGN_KEYVAULT_RBAC:-false}
+ALLOW_KEYVAULT_RBAC_FALLBACK=${ALLOW_KEYVAULT_RBAC_FALLBACK:-true}
+STRICT_RBAC_ASSIGNMENT=${STRICT_RBAC_ASSIGNMENT:-false}
+
 echo "Creating self-signed certificate for $APP_NAME"
 if [ -n "$CERT_BASE_NAME" ]; then
   CERT_NAME="$CERT_BASE_NAME"
@@ -26,12 +40,14 @@ else
 fi
 
 # Support creating the certificate in KeyVault instead of locally
+CREATED_IN_KEYVAULT=false
 if [ "${USE_KEYVAULT_CERT:-false}" = "true" ] && [ -n "$KEYVAULT_NAME" ]; then
   echo "Creating a certificate in KeyVault: $KEYVAULT_NAME (name: $CERT_NAME)"
   # Get default policy and create a self-signed certificate in Key Vault
   KV_POLICY=$(az keyvault certificate get-default-policy)
   az keyvault certificate create --vault-name "$KEYVAULT_NAME" --name "$CERT_NAME" --policy "$KV_POLICY" >/dev/null
   echo "Created certificate in KeyVault: $CERT_NAME"
+  CREATED_IN_KEYVAULT=true
   # Attempt to retrieve PFX from KeyVault as a Base64 secret
   PFX_BASE64=$(az keyvault secret show --vault-name "$KEYVAULT_NAME" --name "$CERT_NAME" --query value -o tsv 2>/dev/null || true)
   if [ -z "$PFX_BASE64" ]; then
@@ -62,12 +78,24 @@ if [ "${USE_KEYVAULT_CERT:-false}" = "true" ] && [ -n "$KEYVAULT_NAME" ]; then
   if [ -f "${CERT_NAME}.pfx" ]; then
     echo "Importing app credential from local PFX file"
     az ad app credential reset --id "$APP_ID" --cert @${CERT_NAME}.pfx --append >/dev/null
-  else
-    echo "Attempting to attach KeyVault certificate to app directly (if CLI supports --keyvault)"
-    if az ad app credential reset --id "$APP_ID" --keyvault "https://$KEYVAULT_NAME.vault.azure.net" --name "$CERT_NAME" --append >/dev/null 2>&1; then
-      echo "App credential created via KeyVault certificate binding"
     else
-      echo "KeyVault-backed credential binding is not supported or failed; try re-running with a PFX export enabled in Key Vault or run create-spn.sh without USE_KEYVAULT_CERT."
+    echo "Attempting to attach KeyVault certificate to app directly"
+    if [ "${SUPPORTS_KEYVAULT_BINDING}" = "true" ]; then
+      if az ad app credential reset --id "$APP_ID" --keyvault "https://$KEYVAULT_NAME.vault.azure.net" --name "$CERT_NAME" --append >/dev/null 2>&1; then
+        echo "App credential created via KeyVault certificate binding"
+      else
+        echo "KeyVault-backed credential binding failed even though CLI appears to support --keyvault. Try running azure-sp-create.sh again or check CLI permissions."
+      fi
+    else
+      echo "CLI does not support --keyvault binding. Attempting to export PFX from KeyVault (if allowed) and import locally to create the app credential."
+      PFX_BASE64=$(az keyvault secret show --vault-name "$KEYVAULT_NAME" --name "$CERT_NAME" --query value -o tsv 2>/dev/null || true)
+      if [ -n "$PFX_BASE64" ]; then
+        echo "Retrieving PFX and creating app credential from local file."
+        echo "$PFX_BASE64" | base64 --decode > "${CERT_NAME}.pfx"
+        az ad app credential reset --id "$APP_ID" --cert @${CERT_NAME}.pfx --append >/dev/null
+      else
+        echo "KeyVault does not have a PFX secret for cert ${CERT_NAME}. Consider enabling export or use a KeyVault policy with export enabled."
+      fi
     fi
   fi
 else
@@ -82,7 +110,11 @@ if [ -n "$KEYVAULT_NAME" ]; then
     exit 1
   fi
   # import the PFX using the same password used to export
-  az keyvault certificate import --vault-name "$KEYVAULT_NAME" --name "$CERT_NAME" --file "${CERT_NAME}.pfx" --password "$PFX_PASSWORD"
+  if [ "$CREATED_IN_KEYVAULT" = "true" ]; then
+    echo "Certificate was created in KeyVault, no import required."
+  else
+    az keyvault certificate import --vault-name "$KEYVAULT_NAME" --name "$CERT_NAME" --file "${CERT_NAME}.pfx" --password "$PFX_PASSWORD"
+  fi
   echo "Imported certificate to Key Vault as name: ${CERT_NAME}" 
   if [ "${STORE_PASSWORD_IN_KEYVAULT:-false}" = "true" ]; then
     # Use a standard secret name so other scripts and runtimes can discover it based on APP_NAME
@@ -113,21 +145,40 @@ if [ -n "$KEYVAULT_NAME" ]; then
       echo "SP ObjectId: $SP_OBJECT_ID"
       echo "Granting certificate/get/import and secret/get/list/set permissions"
       if az keyvault set-policy --name "$KEYVAULT_NAME" --object-id "$SP_OBJECT_ID" --certificate-permissions get import list --secret-permissions get list set --key-permissions get wrapKey unwrapKey >/dev/null 2>&1; then
-        echo "Assigned KeyVault access policy for SP $APP_ID"
-      else
-        echo "Failed to set KeyVault access policy via set-policy. Attempting RBAC role assignment as fallback."
-        KV_SCOPE=$(az keyvault show --name "$KEYVAULT_NAME" --query id -o tsv)
-        if az role assignment create --assignee-object-id "$SP_OBJECT_ID" --role 'Key Vault Certificates Officer' --scope "$KV_SCOPE" >/dev/null 2>&1; then
-          echo "Assigned KeyVault RBAC role 'Key Vault Certificates Officer' for SP $APP_ID"
+          echo "Assigned KeyVault access policy for SP $APP_ID"
         else
-          echo "Failed to assign KeyVault RBAC role; you may need elevated privileges to assign roles. Please run manually."
+          echo "Failed to set KeyVault access policy via set-policy."
+          if [ "${STRICT_RBAC_ASSIGNMENT}" = "true" ]; then
+            echo "STRICT_RBAC_ASSIGNMENT=true and set-policy failed; aborting."
+            exit 1
+          fi
+          if [ "${ALLOW_KEYVAULT_RBAC_FALLBACK}" = "true" -a "${ASSIGN_KEYVAULT_RBAC}" = "true" ]; then
+            echo "Attempting RBAC role assignment as fallback."
+            KV_SCOPE=$(az keyvault show --name "$KEYVAULT_NAME" --query id -o tsv)
+            if az role assignment create --assignee-object-id "$SP_OBJECT_ID" --role 'Key Vault Certificates Officer' --scope "$KV_SCOPE" >/dev/null 2>&1; then
+              echo "Assigned KeyVault RBAC role 'Key Vault Certificates Officer' for SP $APP_ID"
+            else
+              echo "Failed to assign KeyVault RBAC role; you may need elevated privileges to assign roles. Please run manually."
+            fi
+          else
+            echo "RBAC fallback disabled or not configured; not attempting role assignment."
+          fi
         fi
       fi
     fi
   fi
 fi
 
-THUMBPRINT=$(openssl x509 -noout -fingerprint -in ${CERT_NAME}.crt | sed 's/://g' | sed 's/.*=//')
+if [ -f "${CERT_NAME}.crt" ]; then
+  THUMBPRINT=$(openssl x509 -noout -fingerprint -in ${CERT_NAME}.crt | sed 's/://g' | sed 's/.*=//')
+else
+  # attempt to fetch thumbprint from app credentials list (newest credential)
+  THUMBPRINT=$(az ad app credential list --id "$APP_ID" --query "[-1].thumbprint" -o tsv 2>/dev/null || true)
+  if [ -z "$THUMBPRINT" ] && [ -n "$KEYVAULT_NAME" ]; then
+    # try reading from KeyVault secret if operator stored it
+    THUMBPRINT=$(az keyvault secret show --vault-name "$KEYVAULT_NAME" --name "spn-${APP_NAME}-thumbprint" --query value -o tsv 2>/dev/null || true)
+  fi
+fi
 echo "AppId: $APP_ID" > ./app_credentials.txt
 echo "Cert file: ${CERT_NAME}.crt" >> ./app_credentials.txt
 echo "Thumbprint (local): $THUMBPRINT" >> ./app_credentials.txt
@@ -156,3 +207,6 @@ fi
 echo "Created app and certificate. Save app_credentials.txt securely and add the cert thumbprint to your automation settings."
 echo "Environment options: set EXPORT_PASSWORD_TO_FILE=true to write PFX password to app_credentials.txt."
 echo "Environment options: set STORE_PASSWORD_IN_KEYVAULT=true to store the PFX password into Key Vault when --keyVaultName is supplied."
+echo "Environment options: set ASSIGN_KEYVAULT_RBAC=true to attempt RBAC role assignment fallback if set-policy fails."
+echo "Environment options: set ALLOW_KEYVAULT_RBAC_FALLBACK=false to prevent role assignment fallback if set-policy fails."
+echo "Environment options: set STRICT_RBAC_ASSIGNMENT=true to abort when set-policy fails instead of attempting fallback." 

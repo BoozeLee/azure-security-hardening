@@ -1,0 +1,45 @@
+name: "Dev: Create SPN & KeyVault Cert"
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: "Application (SP) name"
+        required: true
+      resource_group:
+        description: "Resource group to create KeyVault in"
+        required: false
+        default: "dev-spn-rg"
+      keyvault_name:
+        description: "KeyVault name"
+        required: true
+      location:
+        description: "Region"
+        required: false
+        default: "westeurope"
+      cert_base_name:
+        description: "Certificate base name to be used in Key Vault"
+        required: false
+        default: ""
+
+jobs:
+  create-dev-spn:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ensure jq installed
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Run dev create
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          chmod +x ./dev/dev-create-spn-kv.sh
+          ./dev/dev-create-spn-kv.sh --app-name ${{ inputs.app_name }} --keyvault ${{ inputs.keyvault_name }} --resource-group ${{ inputs.resource_group }} --location ${{ inputs.location }} --cert-base-name "${{ inputs.cert_base_name }}"

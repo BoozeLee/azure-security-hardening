@@ -1,0 +1,49 @@
+name: Rotate SPN Certificate
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: "Application (SP) name"
+        required: true
+      keyvault_name:
+        description: "KeyVault name where the certificate will be created"
+        required: true
+      delete_old_thumbprint:
+        description: "Thumbprint of the old cert to remove (optional)"
+        required: false
+        default: ""
+
+jobs:
+  rotate:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ensure dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Run rotate script
+        env:
+          ASSIGN_KEYVAULT_RBAC: true
+          ALLOW_KEYVAULT_RBAC_FALLBACK: true
+          STORE_APP_CREDENTIALS_IN_KEYVAULT: true
+        run: |
+          chmod +x ./rotate-spn-cert.sh
+          ./rotate-spn-cert.sh "${{ inputs.app_name }}" "${{ inputs.keyvault_name }}" --delete-old-thumbprint "${{ inputs.delete_old_thumbprint }}"
+
+      - name: Verify new credential exists
+        run: |
+          if [ -f ./app_credentials.json ]; then
+            APP_ID=$(jq -r .appId ./app_credentials.json)
+            NEW_THUMBPRINT=$(jq -r .thumbprint ./app_credentials.json)
+            echo "Looking up credentials for $APP_ID"
+            az ad app credential list --id "$APP_ID" -o json | jq -r '.[].thumbprint' | grep -i "$NEW_THUMBPRINT" || (echo "New thumbprint not found in app credentials" && exit 1)
+          fi

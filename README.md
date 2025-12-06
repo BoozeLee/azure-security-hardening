@@ -222,6 +222,27 @@ USE_KEYVAULT_CERT=true ./azure-sp-create.sh my-automation-app myKeyVault my-auto
 Note: By default, the script will attempt to export the PFX when KeyVault allows export; otherwise the script will attach the KeyVault certificate to the app without exporting the PFX.
 # GitHub Actions example: non-interactive creation and Key Vault import
 Use the provided workflow: `.github/workflows/create-spn.yml` for a secure way to run this creation in CI.
+### Dev helper (spin up KeyVault & SPN in one command)
+We added `dev/dev-create-spn-kv.sh` as a convenience script to help you quickly create a KeyVault and SPN with a KeyVault-managed certificate in a dev tenant. This is primarily for local or dev CI testing.
+
+```bash
+chmod +x ./dev/dev-create-spn-kv.sh
+./dev/dev-create-spn-kv.sh --app-name my-automation-app --keyvault myTestKv --resource-group myDevRg --location westeurope --cert-base-name my-app-cert
+```
+
+In CI, use `.github/workflows/dev-create-spn-kv.yml` to run the dev script in the runner environment (ensure `AZURE_CREDENTIALS` is set as a repo secret). Avoid using the dev workflow in production.
+
+### Create GitHub environment and require approvals
+We added a helper `tools/create-gh-environment.sh` which uses `gh` CLI to create a GitHub environment (e.g., `dev`/`production`) and attempt to configure required reviewers.
+
+Example to create a production environment and require reviewer `kiliaan`:
+```bash
+chmod +x ./tools/create-gh-environment.sh
+./tools/create-gh-environment.sh production --reviewers kiliaan
+```
+
+Note: You must have `gh auth` configured and sufficient repository rights (admin) to create an environment and set protection rules. If the API call fails due to permissions, configure the environment via GitHub -> Settings -> Environments -> Add Protection Rules and set 'Required reviewers' 
+
 
 An example workflow configuration (inputs) would look like:
 ```yaml
@@ -232,6 +253,9 @@ on:
          keyvault_name: myKeyVault
          cert_base_name: my-automation-app-cert
          store_password_in_kv: 'true'
+         assign_kv_rbac: 'false' # set to true to attempt RBAC role assignment if set-policy fails
+         allow_kv_rbac_fallback: 'true'
+         strict_rbac_assignment: 'false'
          assign_kv_access_policy: 'true'
          store_app_credentials_in_kv: 'true'
 ```
@@ -395,6 +419,7 @@ For questions or issues:
 The following scripts are intended to be deployed and used in automation pipelines and should be considered for SaaS or enterprise automation:
 
 - `azure-sp-create.sh` — Create Service Principals and certificate-based authentication for automation. Should be run as a privileged, audited step (CI or by a human operator). This script can import PFX to Key Vault, optionally store PFX password and app credentials, and assign Key Vault access policy to the created SP.
+ - `rotate-spn-cert.sh` — Create a new KeyVault certificate and bind it to the SP; optionally delete the old app credential by thumbprint. Use this for certificate rotation workflows.
 - `m365-full-setup.ps1` — Orchestrates mailbox creation and license assignment. Should run on a Windows runner or in an environment where `Import-PfxCertificate` works. Supports non-interactive certificate-based auth by fetching PFX and password from Key Vault.
 - `m365-create-mailbox.ps1` / `m365-assign-license.ps1` — Support scripts called by `m365-full-setup.ps1`. Deployed alongside the main script.
 - `.github/workflows/create-spn.yml` — Example secure automation to create SPN in CI. This workflow should be gated by repository environments and reviewers when used for production.

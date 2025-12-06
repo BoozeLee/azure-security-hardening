@@ -13,11 +13,16 @@ A tiny local HTTP server and CLI to simulate sending messages between local agen
 
 ## Quick start
 
-Start the server:
+ - `agent_b.py` — simple agent simulator which polls the server for messages and replies with acknowledgements.
+ - `start-agent-b.sh` — helper script to start `agent_b.py` in the background and write logs and PID.
+ - `test-agent-b.sh` — quick test to verify agent-b replies to messages.
+
+Start server in background (logs written to `qwe-server.log` and PID saved to `server.pid`):
 
 ```bash
 cd tools/qwe
-./start.sh
+./install.sh
+./start_bg.sh
 ```
 
 In another terminal, send a message from the CLI:
@@ -29,6 +34,18 @@ cd tools/qwe
 python qwe.py send --message "Hello world" --channel agents --server http://localhost:9001
 ```
 
+
+Start agent-b simulator in background:
+
+```bash
+./start-agent-b.sh
+```
+
+Run quick test to ensure agent-b replies to messages:
+
+```bash
+./test-agent-b.sh
+```
 List messages:
 
 ```bash
@@ -39,3 +56,5 @@ python qwe.py list --server http://localhost:9001
 
 - The helper scripts use a `.venv` in `tools/qwe` to isolate dependencies.
 - `messages.log` keeps an array of messages and will be created automatically when the server starts.
+- `server.pid` stores the PID when running `start_bg.sh` (use `kill $(cat server.pid)` to stop).
+- If you edit `requirements.txt`, re-run `./install.sh` to update the `.venv`.

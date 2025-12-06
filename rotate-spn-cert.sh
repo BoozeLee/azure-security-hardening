@@ -21,8 +21,13 @@ USE_KEYVAULT_CERT=true STORE_PASSWORD_IN_KEYVAULT=true STORE_APP_CREDENTIALS_IN_
 
 # get the newly created app id and thumbprint from app_credentials.json
 if [ -f ./app_credentials.json ]; then
-  APP_ID=$(jq -r .appId ./app_credentials.json)
-  NEW_THUMBPRINT=$(jq -r .thumbprint ./app_credentials.json)
+  if command -v jq >/dev/null 2>&1; then
+    APP_ID=$(jq -r .appId ./app_credentials.json)
+    NEW_THUMBPRINT=$(jq -r .thumbprint ./app_credentials.json)
+  else
+    APP_ID=$(cat ./app_credentials.json | sed -n 's/.*"appId": "\([^"]*\)".*/\1/p')
+    NEW_THUMBPRINT=$(cat ./app_credentials.json | sed -n 's/.*"thumbprint": "\([^"]*\)".*/\1/p')
+  fi
 else
   echo "No app_credentials.json found. Exiting"
   exit 1
@@ -43,3 +48,9 @@ fi
 
 echo "Rotation complete. New thumbprint: $NEW_THUMBPRINT"
 echo "Please verify your automation and remove old secrets from Key Vault if required."
+# Optionally store new thumbprint in KeyVault
+if [ -n "$KEYVAULT_NAME" ]; then
+  THUMBPRINT_SECRET_NAME="spn-${APP_NAME}-thumbprint"
+  echo "Writing thumbprint secret ${THUMBPRINT_SECRET_NAME} to KeyVault $KEYVAULT_NAME"
+  az keyvault secret set --vault-name "$KEYVAULT_NAME" --name "$THUMBPRINT_SECRET_NAME" --value "$NEW_THUMBPRINT" >/dev/null
+fi

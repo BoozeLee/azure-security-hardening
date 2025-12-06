@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start qwe server",
+      "type": "shell",
+      "command": "./start_bg.sh",
+      "options": {
+        "cwd": "${workspaceFolder}/tools/qwe"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Start agent-b",
+      "type": "shell",
+      "command": "./start-agent-b.sh",
+      "options": {
+        "cwd": "${workspaceFolder}/tools/qwe"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "none",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Test agent-b",
+      "type": "shell",
+      "command": "./test-agent-b.sh",
+      "options": {
+        "cwd": "${workspaceFolder}/tools/qwe"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      }
+    }
+  ]
+}

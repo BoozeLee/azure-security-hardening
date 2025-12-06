@@ -1,3 +1,29 @@
+### Quick dev example
+1) Create a KeyVault (test/dev):
+```bash
+az group create -n myRg -l westeurope
+az keyvault create -n myTestKv -g myRg --location westeurope --sku standard
+```
+
+2) Create SPN with a KeyVault-backed certificate in the dev tenant (non-interactive):
+```bash
+USE_KEYVAULT_CERT=true ASSIGN_KEYVAULT_ACCESS_POLICY=true ASSIGN_KEYVAULT_RBAC=true ./azure-sp-create.sh my-automation-app myTestKv my-automation-app-cert
+```
+If `ASSIGN_KEYVAULT_ACCESS_POLICY` fails due to insufficient permissions, either allow RBAC fallback:
+```bash
+ALLOW_KEYVAULT_RBAC_FALLBACK=true ASSIGN_KEYVAULT_RBAC=true ./azure-sp-create.sh my-automation-app myTestKv my-automation-app-cert
+```
+or force a failure so you can debug and verify permissions explicitly:
+```bash
+STRICT_RBAC_ASSIGNMENT=true ./azure-sp-create.sh my-automation-app myTestKv my-automation-app-cert
+```
+
+3) Validate AAD app credentials by checking the output `app_credentials.json` or using `az` (replace `APP_ID` with actual app id):
+```bash
+cat app_credentials.json
+az ad app credential list --id <APP_ID> -o json | jq -r '.[].thumbprint' | grep -i <THUMBPRINT>
+```
+
 # Deployment Guide - Automating SPNs, Key Vault, and M365 Mailbox Setup
 
 This guide shows the recommended steps and checks to deploy and integrate `azure-sp-create.sh` with Key Vault and run `m365-full-setup.ps1` in CI.
@@ -22,6 +48,33 @@ Steps
 
 5. Verify mailbox & alias creation
    - `Get-Mailbox -Identity support@bakerstreetproject.com | Format-List DisplayName,PrimarySmtpAddress,EmailAddresses`
+
+6. To rotate the service principal's certificate using the KeyVault-backed flow:
+   ```bash
+   # Generate and bind a new certificate for SP
+   ./rotate-spn-cert.sh my-app-name myKeyVault
+
+   # Optionally delete the old thumbprint after verifying the new one is working
+   ./rotate-spn-cert.sh my-app-name myKeyVault --delete-old-thumbprint <old-thumbprint>
+   ```
+
+Notes on rotation:
+- The script deposits the new thumbprint into KeyVault under `spn-<appName>-thumbprint` for runtime lookup.
+- Ensure `ASSIGN_KEYVAULT_ACCESS_POLICY` or `ASSIGN_KEYVAULT_RBAC` are set appropriately when rotating so the app retains required access to KeyVault.
+
+## Development helper script
+We added a `dev/dev-create-spn-kv.sh` script to create a Key Vault and register a Service Principal with a KeyVault-created certificate in a dev environment.
+
+To run locally:
+```bash
+chmod +x ./dev/dev-create-spn-kv.sh
+./dev/dev-create-spn-kv.sh --app-name my-dev-app --keyvault my-dev-kv --resource-group myDevRg --location westeurope --cert-base-name my-dev-app-cert
+```
+Options:
+- `--force true|false` — when false the script will exit if a matching Key Vault cert already exists. Set true to re-run.
+- `--cert-base-name` — the name of the certificate resource in Key Vault (defaults to `spn-<appName>-cert`).
+
+If you run this in CI via the provided workflow `.github/workflows/dev-create-spn-kv.yml`, ensure `AZURE_CREDENTIALS` is configured in repo secrets and avoid using this action in production without gating.
 
 Security Recommendations
 - Avoid writing app credentials to disk unless strictly necessary. Use KeyVault to store them.
