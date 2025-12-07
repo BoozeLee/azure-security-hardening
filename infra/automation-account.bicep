@@ -48,6 +48,8 @@ resource automationAccount 'Microsoft.Automation/automationAccounts@2023-11-01' 
 }
 
 // Security Compliance Check Runbook
+// Note: Runbook scripts are located in infra/runbooks/ directory
+// For deployment, upload scripts to Azure Storage or use Azure DevOps/GitHub for publishing
 resource complianceRunbook 'Microsoft.Automation/automationAccounts/runbooks@2023-11-01' = {
   parent: automationAccount
   name: 'Security-ComplianceCheck'
@@ -57,10 +59,7 @@ resource complianceRunbook 'Microsoft.Automation/automationAccounts/runbooks@202
     runbookType: 'PowerShell72'
     logProgress: true
     logVerbose: true
-    description: 'Automated security compliance scanning for Azure resources'
-    publishContentLink: {
-      uri: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.automation/101-automation/scripts/AzureAutomationTutorial.ps1'
-    }
+    description: 'Automated security compliance scanning for Azure resources. Script: infra/runbooks/Security-ComplianceCheck.ps1'
   }
 }
 
@@ -74,10 +73,7 @@ resource taggingRunbook 'Microsoft.Automation/automationAccounts/runbooks@2023-1
     runbookType: 'PowerShell72'
     logProgress: true
     logVerbose: true
-    description: 'Automatically tag Azure resources for compliance and governance'
-    publishContentLink: {
-      uri: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.automation/101-automation/scripts/AzureAutomationTutorial.ps1'
-    }
+    description: 'Automatically tag Azure resources for compliance and governance. Script: infra/runbooks/Resource-AutoTagging.ps1'
   }
 }
 

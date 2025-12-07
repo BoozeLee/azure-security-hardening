@@ -46,7 +46,11 @@ Write-Output "Starting security compliance check..."
 
 # Check 1: Storage Accounts - Secure Transfer Required
 Write-Output "Checking Storage Accounts for secure transfer..."
-$storageAccounts = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+if ($ResourceGroupName) {
+    $storageAccounts = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+} else {
+    $storageAccounts = Get-AzStorageAccount -ErrorAction SilentlyContinue
+}
 foreach ($sa in $storageAccounts) {
     if (-not $sa.EnableHttpsTrafficOnly) {
         $finding = @{
@@ -63,7 +67,11 @@ foreach ($sa in $storageAccounts) {
 
 # Check 2: Virtual Machines - Managed Disks Encryption
 Write-Output "Checking VMs for disk encryption..."
-$vms = Get-AzVM -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+if ($ResourceGroupName) {
+    $vms = Get-AzVM -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+} else {
+    $vms = Get-AzVM -ErrorAction SilentlyContinue
+}
 foreach ($vm in $vms) {
     $diskEncryption = Get-AzVMDiskEncryptionStatus -ResourceGroupName $vm.ResourceGroupName -VMName $vm.Name -ErrorAction SilentlyContinue
     if ($diskEncryption -and $diskEncryption.OsVolumeEncrypted -ne "Encrypted") {
@@ -81,7 +89,11 @@ foreach ($vm in $vms) {
 
 # Check 3: Network Security Groups - Unrestricted RDP/SSH
 Write-Output "Checking NSGs for unrestricted RDP/SSH access..."
-$nsgs = Get-AzNetworkSecurityGroup -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+if ($ResourceGroupName) {
+    $nsgs = Get-AzNetworkSecurityGroup -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+} else {
+    $nsgs = Get-AzNetworkSecurityGroup -ErrorAction SilentlyContinue
+}
 foreach ($nsg in $nsgs) {
     foreach ($rule in $nsg.SecurityRules) {
         if (($rule.DestinationPortRange -contains "22" -or $rule.DestinationPortRange -contains "3389") -and 
@@ -102,7 +114,11 @@ foreach ($nsg in $nsgs) {
 
 # Check 4: Key Vaults - Soft Delete and Purge Protection
 Write-Output "Checking Key Vaults for soft delete and purge protection..."
-$keyVaults = Get-AzKeyVault -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+if ($ResourceGroupName) {
+    $keyVaults = Get-AzKeyVault -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+} else {
+    $keyVaults = Get-AzKeyVault -ErrorAction SilentlyContinue
+}
 foreach ($kv in $keyVaults) {
     $kvDetails = Get-AzKeyVault -VaultName $kv.VaultName
     if (-not $kvDetails.EnableSoftDelete) {
