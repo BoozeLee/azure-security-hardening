@@ -3,6 +3,16 @@
 # Orchestrates AI-assisted coding workflow through ideation, development, testing, and deployment stages
 # Integrates with GitHub Copilot, Raptor CLI, and uses qwe server for notifications
 
+# Ensure script runs under bash (re-exec if needed)
+if [ -z "${BASH_VERSION:-}" ]; then
+  if command -v bash >/dev/null 2>&1; then
+    exec bash "$0" "$@"
+  else
+    echo "ERROR: This script requires bash. Please run with: bash $0" >&2
+    exit 1
+  fi
+fi
+
 set -euo pipefail
 
 # Configuration Variables
@@ -125,8 +135,58 @@ stage_testing() {
     notify_status "TESTING" "COMPLETED" "Testing phase completed"
 }
 
+# Azure provider registration
+register_azure_providers() {
+    log "INFO" "Registering required Azure resource providers"
+    notify_status "PROVIDER_REGISTRATION" "STARTED" "Registering Azure providers"
+    
+    local providers=(
+        "Microsoft.Security"
+        "Microsoft.OperationalInsights"
+        "Microsoft.AlertsManagement"
+        "Microsoft.Automation"
+        "Microsoft.KeyVault"
+        "Microsoft.Storage"
+        "Microsoft.Network"
+        "Microsoft.Compute"
+    )
+    
+    if [ "${QWE_DRY_RUN:-false}" = "true" ]; then
+        log "INFO" "DRY-RUN: Would register ${#providers[@]} Azure providers"
+        notify_status "PROVIDER_REGISTRATION" "SKIPPED" "Dry-run mode - provider registration skipped"
+        return 0
+    fi
+    
+    # Check if az CLI is available
+    if ! command -v az >/dev/null 2>&1; then
+        log "WARN" "Azure CLI not found; skipping provider registration"
+        notify_status "PROVIDER_REGISTRATION" "SKIPPED" "Azure CLI not available"
+        return 0
+    fi
+    
+    local failed_providers=()
+    for provider in "${providers[@]}"; do
+        log "INFO" "Registering provider: ${provider}"
+        if az provider register --namespace "${provider}" --wait 2>/dev/null; then
+            log "INFO" "Successfully registered: ${provider}"
+        else
+            log "WARN" "Failed to register provider: ${provider}"
+            failed_providers+=("${provider}")
+        fi
+    done
+    
+    if [ ${#failed_providers[@]} -eq 0 ]; then
+        notify_status "PROVIDER_REGISTRATION" "COMPLETED" "All providers registered successfully"
+    else
+        notify_status "PROVIDER_REGISTRATION" "PARTIAL" "Some providers failed: ${failed_providers[*]}"
+    fi
+}
+
 stage_deployment() {
     notify_status "DEPLOYMENT" "STARTED" "Beginning deployment phase"
+    
+    # Register Azure providers first
+    register_azure_providers || log "WARN" "Provider registration had issues, continuing anyway"
 
     # Incorporate existing deployment scripts unless we are in dry-run
     if [ "${QWE_DRY_RUN:-false}" = "true" ]; then
@@ -136,13 +196,16 @@ stage_deployment() {
         for script in $DEPLOY_SCRIPTS; do
             if [ -f "${SCRIPT_DIR}/${script}" ]; then
                 log "INFO" "Deployment: Running ${script}"
+                notify_status "DEPLOYMENT" "IN_PROGRESS" "Executing ${script}"
                 if ! bash "${SCRIPT_DIR}/${script}"; then
                     log "ERROR" "Deployment failed at ${script}"
                     notify_status "DEPLOYMENT" "FAILED" "Deployment failed at ${script}"
                     return 1
                 fi
+                notify_status "DEPLOYMENT" "PROGRESS" "Completed ${script}"
             else
                 log "WARN" "Deployment script ${script} not found"
+                notify_status "DEPLOYMENT" "WARNING" "Script not found: ${script}"
             fi
         done
     fi
