@@ -5,9 +5,13 @@
 .DESCRIPTION
     Automated security compliance scanning for Azure resources.
     Checks for common security misconfigurations and reports findings.
+    
+    Note: For large environments with many VMs, consider using parallel processing
+    or Azure Policy for more efficient compliance checking at scale.
 
 .NOTES
     Requires: System-assigned managed identity with Reader role
+    Performance: Sequential scanning suitable for small-medium environments
 #>
 
 param(

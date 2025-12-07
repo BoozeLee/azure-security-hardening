@@ -27,6 +27,9 @@ param logAnalyticsWorkspaceId string
 @description('Schedule start time (must be at least 5 minutes in the future)')
 param scheduleStartTime string = utcNow('u')
 
+@description('Enable public network access for automation account')
+param enablePublicNetworkAccess bool = true
+
 // Automation Account
 resource automationAccount 'Microsoft.Automation/automationAccounts@2023-11-01' = {
   name: automationAccountName
@@ -42,7 +45,9 @@ resource automationAccount 'Microsoft.Automation/automationAccounts@2023-11-01' 
     encryption: {
       keySource: 'Microsoft.Automation'
     }
-    publicNetworkAccess: false
+    // Public network access enabled by default to allow runbooks to access Azure APIs
+    // Set to false only if private endpoints are configured
+    publicNetworkAccess: enablePublicNetworkAccess
     disableLocalAuth: false
   }
 }

@@ -5,9 +5,14 @@
 .DESCRIPTION
     Automatically tags Azure resources for compliance and governance.
     Applies standard tags based on resource type, location, and naming conventions.
+    
+    Note: For large environments (>1000 resources), consider using Update-AzTag
+    cmdlet with batch operations for improved performance, or scope to specific
+    resource groups rather than subscription-wide tagging.
 
 .NOTES
     Requires: System-assigned managed identity with Contributor role
+    Performance: Sequential tagging suitable for small-medium environments
 #>
 
 param(

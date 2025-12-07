@@ -167,10 +167,11 @@ register_azure_providers() {
     local failed_providers=()
     for provider in "${providers[@]}"; do
         log "INFO" "Registering provider: ${provider}"
-        if az provider register --namespace "${provider}" --wait 2>/dev/null; then
+        # Register with timeout to prevent indefinite blocking (max 5 minutes per provider)
+        if timeout 300 az provider register --namespace "${provider}" --wait 2>/dev/null; then
             log "INFO" "Successfully registered: ${provider}"
         else
-            log "WARN" "Failed to register provider: ${provider}"
+            log "WARN" "Failed to register provider: ${provider} (may already be registered or timed out)"
             failed_providers+=("${provider}")
         fi
     done
