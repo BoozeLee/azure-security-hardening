@@ -1,3 +1,5 @@
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/BoozeLee/azure-security-hardening)
 # 🛡️ Azure Security Hardening - Professional Edition
 
 > **Military-grade Azure security in 15 minutes** - Deploy zero-trust infrastructure with one command. Used in production high-threat environments.
