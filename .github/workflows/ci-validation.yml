@@ -18,7 +18,7 @@ jobs:
     name: "Validate Bicep Templates"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Install Bicep CLI"
         run: |
@@ -54,7 +54,7 @@ jobs:
     name: "Security & Compliance Scan"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Run Checkov IaC Security Scan"
         uses: bridgecrewio/checkov-action@v12
@@ -103,7 +103,7 @@ jobs:
     needs: [validate, security-scan]
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Azure Login"
         uses: azure/login@v2
