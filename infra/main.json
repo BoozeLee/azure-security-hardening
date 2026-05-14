@@ -1,0 +1,3263 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "1175105129983117618"
+    }
+  },
+  "parameters": {
+    "environmentName": {
+      "type": "string",
+      "defaultValue": "prod",
+      "metadata": {
+        "description": "Environment name (prod, staging, dev)"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "westeurope",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "securityContactEmail": {
+      "type": "string",
+      "defaultValue": "kiliaan@bakerstreetproject221b.store",
+      "metadata": {
+        "description": "Your email for security alerts"
+      }
+    },
+    "resourcePrefix": {
+      "type": "string",
+      "defaultValue": "sec-bsp",
+      "metadata": {
+        "description": "Resource prefix for naming"
+      }
+    }
+  },
+  "variables": {
+    "resourceGroupName": "[format('{0}-rg-{1}', parameters('resourcePrefix'), parameters('environmentName'))]",
+    "tags": {
+      "Environment": "[parameters('environmentName')]",
+      "Owner": "kiliaan@bakerstreetproject221b.store",
+      "Purpose": "Security-Hardened-Resources",
+      "ThreatLevel": "High",
+      "Compliance": "Required"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2023-07-01",
+      "name": "[variables('resourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "keyVaultDeployment",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "keyVaultName": {
+            "value": "[format('{0}-kv-{1}', parameters('resourcePrefix'), parameters('environmentName'))]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tenantId": {
+            "value": "[tenant().tenantId]"
+          },
+          "enabledForDiskEncryption": {
+            "value": true
+          },
+          "enabledForTemplateDeployment": {
+            "value": true
+          },
+          "enableRbacAuthorization": {
+            "value": true
+          },
+          "enableSoftDelete": {
+            "value": true
+          },
+          "softDeleteRetentionInDays": {
+            "value": 90
+          },
+          "enablePurgeProtection": {
+            "value": true
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "4156215072830408002"
+            }
+          },
+          "parameters": {
+            "keyVaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Key Vault"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "The Azure location where the key vault should be created"
+              }
+            },
+            "tenantId": {
+              "type": "string",
+              "metadata": {
+                "description": "The Azure tenant ID"
+              }
+            },
+            "enabledForDiskEncryption": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Key Vault for disk encryption"
+              }
+            },
+            "enabledForTemplateDeployment": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Key Vault for template deployment"
+              }
+            },
+            "enableRbacAuthorization": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable RBAC authorization for Key Vault"
+              }
+            },
+            "enableSoftDelete": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable soft delete for Key Vault"
+              }
+            },
+            "softDeleteRetentionInDays": {
+              "type": "int",
+              "defaultValue": 90,
+              "metadata": {
+                "description": "Soft delete retention period in days"
+              }
+            },
+            "enablePurgeProtection": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable purge protection for Key Vault"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Resource tags"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2023-07-01",
+              "name": "[parameters('keyVaultName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "family": "A",
+                  "name": "premium"
+                },
+                "tenantId": "[parameters('tenantId')]",
+                "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
+                "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
+                "enableRbacAuthorization": "[parameters('enableRbacAuthorization')]",
+                "enableSoftDelete": "[parameters('enableSoftDelete')]",
+                "softDeleteRetentionInDays": "[parameters('softDeleteRetentionInDays')]",
+                "enablePurgeProtection": "[parameters('enablePurgeProtection')]",
+                "publicNetworkAccess": "Disabled",
+                "networkAcls": {
+                  "bypass": "AzureServices",
+                  "defaultAction": "Deny",
+                  "ipRules": [],
+                  "virtualNetworkRules": []
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}-pe', parameters('keyVaultName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "subnet": {
+                  "id": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/sec-bsp-vnet-prod/subnets/default', subscription().subscriptionId, resourceGroup().name)]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "keyVaultConnection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+                      "groupIds": [
+                        "vault"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+              "name": "[format('{0}-diagnostics', parameters('keyVaultName'))]",
+              "properties": {
+                "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": true,
+                      "days": 90
+                    }
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": true,
+                      "days": 90
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "keyVaultId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+            },
+            "keyVaultUri": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri]"
+            },
+            "keyVaultName": {
+              "type": "string",
+              "value": "[parameters('keyVaultName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "securityCenterDeployment",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "securityContactEmail": {
+            "value": "[parameters('securityContactEmail')]"
+          },
+          "enableDefenderForServers": {
+            "value": true
+          },
+          "enableDefenderForStorage": {
+            "value": true
+          },
+          "enableDefenderForKeyVault": {
+            "value": true
+          },
+          "enableDefenderForResourceManager": {
+            "value": true
+          },
+          "enableDefenderForDns": {
+            "value": true
+          },
+          "enableDefenderForAppService": {
+            "value": true
+          },
+          "enableDefenderForContainers": {
+            "value": true
+          },
+          "enableDefenderForSql": {
+            "value": true
+          },
+          "enableDefenderForOpenSourceDatabases": {
+            "value": true
+          },
+          "enableDefenderForCosmosDb": {
+            "value": true
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "8920484456342641063"
+            }
+          },
+          "parameters": {
+            "securityContactEmail": {
+              "type": "string",
+              "metadata": {
+                "description": "Security contact email for alerts"
+              }
+            },
+            "enableDefenderForServers": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for Servers"
+              }
+            },
+            "enableDefenderForStorage": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for Storage"
+              }
+            },
+            "enableDefenderForKeyVault": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for Key Vault"
+              }
+            },
+            "enableDefenderForResourceManager": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for Resource Manager"
+              }
+            },
+            "enableDefenderForDns": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for DNS"
+              }
+            },
+            "enableDefenderForAppService": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for App Service"
+              }
+            },
+            "enableDefenderForContainers": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for Containers"
+              }
+            },
+            "enableDefenderForSql": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for SQL"
+              }
+            },
+            "enableDefenderForOpenSourceDatabases": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for Open-Source Databases"
+              }
+            },
+            "enableDefenderForCosmosDb": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for Azure Cosmos DB"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Security/securityContacts",
+              "apiVersion": "2020-01-01-preview",
+              "name": "default",
+              "properties": {
+                "emails": "[parameters('securityContactEmail')]",
+                "phone": "",
+                "alertNotifications": {
+                  "state": "On",
+                  "minimalSeverity": "Low"
+                },
+                "notificationsByRole": {
+                  "state": "On",
+                  "roles": [
+                    "Owner",
+                    "Contributor"
+                  ]
+                }
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForServers')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "VirtualMachines",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForStorage')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "StorageAccounts",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForKeyVault')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "KeyVaults",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForResourceManager')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "Arm",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForDns')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "Dns",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForAppService')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "AppServices",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForContainers')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "Containers",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForSql')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "SqlServers",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForSql')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "SqlServerVirtualMachines",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForOpenSourceDatabases')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "OpenSourceRelationalDatabases",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "condition": "[parameters('enableDefenderForCosmosDb')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2022-03-01",
+              "name": "CosmosDbs",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            },
+            {
+              "type": "Microsoft.Security/autoProvisioningSettings",
+              "apiVersion": "2017-08-01-preview",
+              "name": "default",
+              "properties": {
+                "autoProvision": "On"
+              }
+            }
+          ],
+          "outputs": {
+            "securityContactEmail": {
+              "type": "string",
+              "value": "[reference(subscriptionResourceId('Microsoft.Security/securityContacts', 'default'), '2020-01-01-preview').emails]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "networkSecurityDeployment",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vnetName": {
+            "value": "[format('{0}-vnet-{1}', parameters('resourcePrefix'), parameters('environmentName'))]"
+          },
+          "nsgName": {
+            "value": "[format('{0}-nsg-{1}', parameters('resourcePrefix'), parameters('environmentName'))]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "7219325366299468551"
+            }
+          },
+          "parameters": {
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual Network name"
+              }
+            },
+            "nsgName": {
+              "type": "string",
+              "metadata": {
+                "description": "Network Security Group name"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for resources"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Resource tags"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-09-01",
+              "name": "[parameters('nsgName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "DenyAllInbound",
+                    "properties": {
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Deny",
+                      "priority": 4000,
+                      "direction": "Inbound",
+                      "description": "Deny all inbound traffic by default"
+                    }
+                  },
+                  {
+                    "name": "AllowAzureLoadBalancer",
+                    "properties": {
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "AzureLoadBalancer",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 1000,
+                      "direction": "Inbound",
+                      "description": "Allow Azure Load Balancer health probes"
+                    }
+                  },
+                  {
+                    "name": "AllowOutboundHTTPS",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "AzureCloud",
+                      "access": "Allow",
+                      "priority": 1000,
+                      "direction": "Outbound",
+                      "description": "Allow outbound HTTPS to Azure services"
+                    }
+                  },
+                  {
+                    "name": "DenyAllOutbound",
+                    "properties": {
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Deny",
+                      "priority": 4000,
+                      "direction": "Outbound",
+                      "description": "Deny all other outbound traffic"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-09-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "10.0.0.0/16"
+                  ]
+                },
+                "enableDdosProtection": true,
+                "ddosProtectionPlan": {
+                  "id": "[resourceId('Microsoft.Network/ddosProtectionPlans', format('{0}-ddos-plan', parameters('vnetName')))]"
+                },
+                "subnets": [
+                  {
+                    "name": "default",
+                    "properties": {
+                      "addressPrefix": "10.0.1.0/24",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+                      },
+                      "privateEndpointNetworkPolicies": "Enabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled",
+                      "serviceEndpoints": [
+                        {
+                          "service": "Microsoft.KeyVault"
+                        },
+                        {
+                          "service": "Microsoft.Storage"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "private-endpoints",
+                    "properties": {
+                      "addressPrefix": "10.0.2.0/24",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+                      },
+                      "privateEndpointNetworkPolicies": "Disabled",
+                      "privateLinkServiceNetworkPolicies": "Disabled"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/ddosProtectionPlans', format('{0}-ddos-plan', parameters('vnetName')))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/ddosProtectionPlans",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}-ddos-plan', parameters('vnetName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/networkWatchers",
+              "apiVersion": "2023-09-01",
+              "name": "[format('NetworkWatcher_{0}', parameters('location'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/networkWatchers/flowLogs",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}/{1}-flowlogs', format('NetworkWatcher_{0}', parameters('location')), parameters('nsgName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "targetResourceId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+                "storageId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Storage/storageAccounts/secbspsaprod{2}', subscription().subscriptionId, resourceGroup().name, uniqueString(resourceGroup().id))]",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 90,
+                  "enabled": true
+                },
+                "format": {
+                  "type": "JSON",
+                  "version": 2
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+                "[resourceId('Microsoft.Network/networkWatchers', format('NetworkWatcher_{0}', parameters('location')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            },
+            "vnetName": {
+              "type": "string",
+              "value": "[parameters('vnetName')]"
+            },
+            "subnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2023-09-01').subnets[0].id]"
+            },
+            "nsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "storageDeployment",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "storageAccountName": {
+            "value": "[format('{0}sa{1}{2}', parameters('resourcePrefix'), parameters('environmentName'), uniqueString(subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))))]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "keyVaultId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'keyVaultDeployment'), '2025-04-01').outputs.keyVaultId.value]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "154625505633083414"
+            }
+          },
+          "parameters": {
+            "storageAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Storage account name"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for resources"
+              }
+            },
+            "keyVaultId": {
+              "type": "string",
+              "metadata": {
+                "description": "Key Vault resource ID for encryption keys"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Resource tags"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "Standard_ZRS"
+              },
+              "properties": {
+                "accessTier": "Hot",
+                "allowBlobPublicAccess": false,
+                "allowSharedKeyAccess": false,
+                "allowCrossTenantReplication": false,
+                "defaultToOAuthAuthentication": true,
+                "publicNetworkAccess": "Disabled",
+                "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                  "requireInfrastructureEncryption": true,
+                  "keySource": "Microsoft.Keyvault",
+                  "keyvaultproperties": {
+                    "keyvaulturi": "[reference(parameters('keyVaultId'), '2023-07-01').vaultUri]",
+                    "keyname": "storage-encryption-key"
+                  },
+                  "services": {
+                    "file": {
+                      "enabled": true,
+                      "keyType": "Service"
+                    },
+                    "blob": {
+                      "enabled": true,
+                      "keyType": "Service"
+                    },
+                    "queue": {
+                      "enabled": true,
+                      "keyType": "Service"
+                    },
+                    "table": {
+                      "enabled": true,
+                      "keyType": "Service"
+                    }
+                  }
+                },
+                "networkAcls": {
+                  "defaultAction": "Deny",
+                  "bypass": "AzureServices",
+                  "ipRules": [],
+                  "virtualNetworkRules": [],
+                  "resourceAccessRules": []
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}-pe', parameters('storageAccountName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "subnet": {
+                  "id": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/sec-bsp-vnet-prod/subnets/private-endpoints', subscription().subscriptionId, resourceGroup().name)]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "storageConnection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                      "groupIds": [
+                        "blob"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Security/advancedThreatProtectionSettings",
+              "apiVersion": "2019-01-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
+              "name": "current",
+              "properties": {
+                "isEnabled": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
+              "name": "[format('{0}-diagnostics', parameters('storageAccountName'))]",
+              "properties": {
+                "workspaceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.OperationalInsights/workspaces/sec-bsp-law-prod', subscription().subscriptionId, resourceGroup().name)]",
+                "metrics": [
+                  {
+                    "category": "Transaction",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": true,
+                      "days": 90
+                    }
+                  },
+                  {
+                    "category": "Capacity",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": true,
+                      "days": 90
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "storageAccountId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            },
+            "storageAccountName": {
+              "type": "string",
+              "value": "[parameters('storageAccountName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'keyVaultDeployment')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "logAnalyticsDeployment",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "workspaceName": {
+            "value": "[format('{0}-law-{1}', parameters('resourcePrefix'), parameters('environmentName'))]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "retentionInDays": {
+            "value": 90
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "7479425758668806846"
+            }
+          },
+          "parameters": {
+            "workspaceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics Workspace name"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for resources"
+              }
+            },
+            "retentionInDays": {
+              "type": "int",
+              "defaultValue": 90,
+              "metadata": {
+                "description": "Data retention in days"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Resource tags"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2022-10-01",
+              "name": "[parameters('workspaceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": "[parameters('retentionInDays')]",
+                "features": {
+                  "enableLogAccessUsingOnlyResourcePermissions": true,
+                  "immediatePurgeDataOn30Days": false
+                },
+                "workspaceCapping": {
+                  "dailyQuotaGb": 10
+                },
+                "publicNetworkAccessForIngestion": "Disabled",
+                "publicNetworkAccessForQuery": "Disabled"
+              }
+            },
+            {
+              "type": "Microsoft.OperationsManagement/solutions",
+              "apiVersion": "2015-11-01-preview",
+              "name": "[format('Security({0})', parameters('workspaceName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "plan": {
+                "name": "[format('Security({0})', parameters('workspaceName'))]",
+                "publisher": "Microsoft",
+                "product": "OMSGallery/Security",
+                "promotionCode": ""
+              },
+              "properties": {
+                "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationsManagement/solutions",
+              "apiVersion": "2015-11-01-preview",
+              "name": "[format('AzureActivity({0})', parameters('workspaceName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "plan": {
+                "name": "[format('AzureActivity({0})', parameters('workspaceName'))]",
+                "publisher": "Microsoft",
+                "product": "OMSGallery/AzureActivity",
+                "promotionCode": ""
+              },
+              "properties": {
+                "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('workspaceName'), 'SecurityAlerts')]",
+              "properties": {
+                "displayName": "Security Alerts",
+                "category": "Security",
+                "query": "      SecurityAlert\n      | where TimeGenerated > ago(24h)\n      | where AlertSeverity in (\"High\", \"Medium\")\n      | summarize count() by AlertName, AlertSeverity\n      | order by count_ desc\n    ",
+                "functionAlias": "SecurityAlerts"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('workspaceName'), 'FailedLogins')]",
+              "properties": {
+                "displayName": "Failed Login Attempts",
+                "category": "Security",
+                "query": "      SigninLogs\n      | where TimeGenerated > ago(1h)\n      | where ResultType != 0\n      | summarize FailedAttempts = count() by UserPrincipalName, IPAddress\n      | where FailedAttempts > 5\n      | order by FailedAttempts desc\n    ",
+                "functionAlias": "FailedLogins"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "workspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+            },
+            "workspaceName": {
+              "type": "string",
+              "value": "[parameters('workspaceName')]"
+            },
+            "customerId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName')), '2022-10-01').customerId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "azurePolicyDeployment",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "policyAssignmentName": {
+            "value": "security-baseline-assignment"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "13525279441665864529"
+            }
+          },
+          "parameters": {
+            "policyAssignmentName": {
+              "type": "string",
+              "metadata": {
+                "description": "Policy assignment name"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/policyAssignments",
+              "apiVersion": "2022-06-01",
+              "name": "[parameters('policyAssignmentName')]",
+              "properties": {
+                "displayName": "Azure Security Baseline - High Threat Environment",
+                "description": "Assigns the Azure Security Baseline policy initiative for maximum protection",
+                "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/a169a624-5599-4385-a696-c8d643089fab",
+                "parameters": {
+                  "requiredRetentionDays": {
+                    "value": "90"
+                  },
+                  "enableLogAnalytics": {
+                    "value": true
+                  }
+                },
+                "enforcementMode": "Default",
+                "nonComplianceMessages": [
+                  {
+                    "message": "This resource does not meet security baseline requirements for high-threat environments"
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "securityBaselineAssignmentId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Authorization/policyAssignments', parameters('policyAssignmentName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "complianceFrameworksDeployment",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "enableISO27001": {
+            "value": true
+          },
+          "enableSOC2": {
+            "value": true
+          },
+          "enableHIPAA": {
+            "value": true
+          },
+          "enablePCIDSS": {
+            "value": true
+          },
+          "enableNIST": {
+            "value": true
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "4818352175266316602"
+            }
+          },
+          "parameters": {
+            "enableISO27001": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable ISO 27001 compliance framework"
+              }
+            },
+            "enableSOC2": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable SOC 2 compliance framework"
+              }
+            },
+            "enableHIPAA": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable HIPAA compliance framework"
+              }
+            },
+            "enablePCIDSS": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable PCI DSS compliance framework"
+              }
+            },
+            "enableNIST": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable NIST compliance framework"
+              }
+            }
+          },
+          "resources": [
+            {
+              "condition": "[parameters('enableISO27001')]",
+              "type": "Microsoft.Authorization/policyAssignments",
+              "apiVersion": "2022-06-01",
+              "name": "iso27001-compliance",
+              "properties": {
+                "displayName": "ISO 27001:2013 Compliance",
+                "description": "Implements ISO 27001:2013 information security management controls",
+                "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/89c6cddc-1c73-4ac1-b19c-54d1a15a42f2",
+                "enforcementMode": "Default",
+                "metadata": {
+                  "category": "Compliance",
+                  "framework": "ISO27001",
+                  "version": "2013"
+                },
+                "nonComplianceMessages": [
+                  {
+                    "message": "Resource does not meet ISO 27001:2013 compliance requirements"
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[parameters('enableSOC2')]",
+              "type": "Microsoft.Authorization/policyAssignments",
+              "apiVersion": "2022-06-01",
+              "name": "soc2-compliance",
+              "properties": {
+                "displayName": "SOC 2 Type 2 Compliance",
+                "description": "Implements SOC 2 Trust Service Criteria controls",
+                "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/a169a624-5599-4385-a696-c8d643089fab",
+                "enforcementMode": "Default",
+                "metadata": {
+                  "category": "Compliance",
+                  "framework": "SOC2",
+                  "type": "Type2"
+                },
+                "nonComplianceMessages": [
+                  {
+                    "message": "Resource does not meet SOC 2 Type 2 compliance requirements"
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[parameters('enableHIPAA')]",
+              "type": "Microsoft.Authorization/policyAssignments",
+              "apiVersion": "2022-06-01",
+              "name": "hipaa-compliance",
+              "properties": {
+                "displayName": "HIPAA HITRUST 9.2 Compliance",
+                "description": "Implements HIPAA/HITRUST controls for healthcare data protection",
+                "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/a169a624-5599-4385-a696-c8d643089fab",
+                "enforcementMode": "Default",
+                "metadata": {
+                  "category": "Compliance",
+                  "framework": "HIPAA",
+                  "version": "9.2"
+                },
+                "nonComplianceMessages": [
+                  {
+                    "message": "Resource does not meet HIPAA/HITRUST compliance requirements"
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[parameters('enablePCIDSS')]",
+              "type": "Microsoft.Authorization/policyAssignments",
+              "apiVersion": "2022-06-01",
+              "name": "pci-dss-compliance",
+              "properties": {
+                "displayName": "PCI DSS 3.2.1 Compliance",
+                "description": "Implements PCI DSS controls for payment card data protection",
+                "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/496eeda9-8f2f-4d5e-8dfd-204f0a92ed41",
+                "enforcementMode": "Default",
+                "metadata": {
+                  "category": "Compliance",
+                  "framework": "PCIDSS",
+                  "version": "3.2.1"
+                },
+                "nonComplianceMessages": [
+                  {
+                    "message": "Resource does not meet PCI DSS 3.2.1 compliance requirements"
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[parameters('enableNIST')]",
+              "type": "Microsoft.Authorization/policyAssignments",
+              "apiVersion": "2022-06-01",
+              "name": "nist-compliance",
+              "properties": {
+                "displayName": "NIST SP 800-53 Rev. 5 Compliance",
+                "description": "Implements NIST cybersecurity framework controls",
+                "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/cf25b9c1-bd23-4eb6-bd2c-f4f3ac644a5f",
+                "enforcementMode": "Default",
+                "metadata": {
+                  "category": "Compliance",
+                  "framework": "NIST",
+                  "version": "SP800-53-Rev5"
+                },
+                "nonComplianceMessages": [
+                  {
+                    "message": "Resource does not meet NIST SP 800-53 Rev. 5 compliance requirements"
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "iso27001AssignmentId": {
+              "type": "string",
+              "value": "[if(parameters('enableISO27001'), subscriptionResourceId('Microsoft.Authorization/policyAssignments', 'iso27001-compliance'), '')]"
+            },
+            "soc2AssignmentId": {
+              "type": "string",
+              "value": "[if(parameters('enableSOC2'), subscriptionResourceId('Microsoft.Authorization/policyAssignments', 'soc2-compliance'), '')]"
+            },
+            "hipaaAssignmentId": {
+              "type": "string",
+              "value": "[if(parameters('enableHIPAA'), subscriptionResourceId('Microsoft.Authorization/policyAssignments', 'hipaa-compliance'), '')]"
+            },
+            "pciDssAssignmentId": {
+              "type": "string",
+              "value": "[if(parameters('enablePCIDSS'), subscriptionResourceId('Microsoft.Authorization/policyAssignments', 'pci-dss-compliance'), '')]"
+            },
+            "nistAssignmentId": {
+              "type": "string",
+              "value": "[if(parameters('enableNIST'), subscriptionResourceId('Microsoft.Authorization/policyAssignments', 'nist-compliance'), '')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "backupRecoveryDeployment",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vaultName": {
+            "value": "[format('{0}-rsv-{1}', parameters('resourcePrefix'), parameters('environmentName'))]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "backupRetentionDays": {
+            "value": 90
+          },
+          "enableGeoRedundantBackup": {
+            "value": true
+          },
+          "enableCrossRegionRestore": {
+            "value": true
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeployment'), '2025-04-01').outputs.workspaceId.value]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "12334660029771523409"
+            }
+          },
+          "parameters": {
+            "vaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "Recovery Services Vault name"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for resources"
+              }
+            },
+            "backupRetentionDays": {
+              "type": "int",
+              "defaultValue": 90,
+              "metadata": {
+                "description": "Backup retention in days"
+              }
+            },
+            "enableGeoRedundantBackup": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable geo-redundant backup"
+              }
+            },
+            "enableCrossRegionRestore": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable cross-region restore"
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics Workspace ID for diagnostics"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Resource tags"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.RecoveryServices/vaults",
+              "apiVersion": "2023-04-01",
+              "name": "[parameters('vaultName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "RS0",
+                "tier": "Standard"
+              },
+              "properties": {
+                "publicNetworkAccess": "Disabled",
+                "encryption": {
+                  "keyVaultProperties": null,
+                  "infrastructureEncryption": "Enabled"
+                },
+                "securitySettings": {
+                  "immutabilitySettings": {
+                    "state": "Unlocked"
+                  },
+                  "softDeleteSettings": {
+                    "softDeleteState": "Enabled",
+                    "softDeleteRetentionPeriodInDays": 14
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.RecoveryServices/vaults/backupstorageconfig",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vaultName'), 'vaultstorageconfig')]",
+              "properties": {
+                "storageModelType": "[if(parameters('enableGeoRedundantBackup'), 'GeoRedundant', 'LocallyRedundant')]",
+                "crossRegionRestoreFlag": "[parameters('enableCrossRegionRestore')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vaultName'), 'EnterpriseVMBackupPolicy')]",
+              "properties": {
+                "backupManagementType": "AzureIaasVM",
+                "instantRpRetentionRangeInDays": 5,
+                "schedulePolicy": {
+                  "schedulePolicyType": "SimpleSchedulePolicy",
+                  "scheduleRunFrequency": "Daily",
+                  "scheduleRunTimes": [
+                    "2024-01-01T02:00:00Z"
+                  ],
+                  "scheduleWeeklyFrequency": 0
+                },
+                "retentionPolicy": {
+                  "retentionPolicyType": "LongTermRetentionPolicy",
+                  "dailySchedule": {
+                    "retentionTimes": [
+                      "2024-01-01T02:00:00Z"
+                    ],
+                    "retentionDuration": {
+                      "count": "[parameters('backupRetentionDays')]",
+                      "durationType": "Days"
+                    }
+                  },
+                  "weeklySchedule": {
+                    "daysOfTheWeek": [
+                      "Sunday"
+                    ],
+                    "retentionTimes": [
+                      "2024-01-01T02:00:00Z"
+                    ],
+                    "retentionDuration": {
+                      "count": 52,
+                      "durationType": "Weeks"
+                    }
+                  },
+                  "monthlySchedule": {
+                    "retentionScheduleFormatType": "Weekly",
+                    "retentionScheduleWeekly": {
+                      "daysOfTheWeek": [
+                        "Sunday"
+                      ],
+                      "weeksOfTheMonth": [
+                        "First"
+                      ]
+                    },
+                    "retentionTimes": [
+                      "2024-01-01T02:00:00Z"
+                    ],
+                    "retentionDuration": {
+                      "count": 60,
+                      "durationType": "Months"
+                    }
+                  },
+                  "yearlySchedule": {
+                    "retentionScheduleFormatType": "Weekly",
+                    "monthsOfYear": [
+                      "January"
+                    ],
+                    "retentionScheduleWeekly": {
+                      "daysOfTheWeek": [
+                        "Sunday"
+                      ],
+                      "weeksOfTheMonth": [
+                        "First"
+                      ]
+                    },
+                    "retentionTimes": [
+                      "2024-01-01T02:00:00Z"
+                    ],
+                    "retentionDuration": {
+                      "count": 10,
+                      "durationType": "Years"
+                    }
+                  }
+                },
+                "timeZone": "UTC"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vaultName'), 'EnterpriseSQLBackupPolicy')]",
+              "properties": {
+                "backupManagementType": "AzureWorkload",
+                "workLoadType": "SQLDataBase",
+                "settings": {
+                  "timeZone": "UTC",
+                  "issqlcompression": true,
+                  "isCompression": true
+                },
+                "subProtectionPolicy": [
+                  {
+                    "policyType": "Full",
+                    "schedulePolicy": {
+                      "schedulePolicyType": "SimpleSchedulePolicy",
+                      "scheduleRunFrequency": "Weekly",
+                      "scheduleRunDays": [
+                        "Sunday"
+                      ],
+                      "scheduleRunTimes": [
+                        "2024-01-01T02:00:00Z"
+                      ]
+                    },
+                    "retentionPolicy": {
+                      "retentionPolicyType": "LongTermRetentionPolicy",
+                      "weeklySchedule": {
+                        "daysOfTheWeek": [
+                          "Sunday"
+                        ],
+                        "retentionTimes": [
+                          "2024-01-01T02:00:00Z"
+                        ],
+                        "retentionDuration": {
+                          "count": 52,
+                          "durationType": "Weeks"
+                        }
+                      },
+                      "monthlySchedule": {
+                        "retentionScheduleFormatType": "Weekly",
+                        "retentionScheduleWeekly": {
+                          "daysOfTheWeek": [
+                            "Sunday"
+                          ],
+                          "weeksOfTheMonth": [
+                            "First"
+                          ]
+                        },
+                        "retentionTimes": [
+                          "2024-01-01T02:00:00Z"
+                        ],
+                        "retentionDuration": {
+                          "count": 60,
+                          "durationType": "Months"
+                        }
+                      },
+                      "yearlySchedule": {
+                        "retentionScheduleFormatType": "Weekly",
+                        "monthsOfYear": [
+                          "January"
+                        ],
+                        "retentionScheduleWeekly": {
+                          "daysOfTheWeek": [
+                            "Sunday"
+                          ],
+                          "weeksOfTheMonth": [
+                            "First"
+                          ]
+                        },
+                        "retentionTimes": [
+                          "2024-01-01T02:00:00Z"
+                        ],
+                        "retentionDuration": {
+                          "count": 10,
+                          "durationType": "Years"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "policyType": "Differential",
+                    "schedulePolicy": {
+                      "schedulePolicyType": "SimpleSchedulePolicy",
+                      "scheduleRunFrequency": "Weekly",
+                      "scheduleRunDays": [
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday"
+                      ],
+                      "scheduleRunTimes": [
+                        "2024-01-01T02:00:00Z"
+                      ]
+                    },
+                    "retentionPolicy": {
+                      "retentionPolicyType": "SimpleRetentionPolicy",
+                      "retentionDuration": {
+                        "count": 30,
+                        "durationType": "Days"
+                      }
+                    }
+                  },
+                  {
+                    "policyType": "Log",
+                    "schedulePolicy": {
+                      "schedulePolicyType": "LogSchedulePolicy",
+                      "scheduleFrequencyInMins": 120
+                    },
+                    "retentionPolicy": {
+                      "retentionPolicyType": "SimpleRetentionPolicy",
+                      "retentionDuration": {
+                        "count": 15,
+                        "durationType": "Days"
+                      }
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', parameters('vaultName'), 'EnterpriseFileShareBackupPolicy')]",
+              "properties": {
+                "backupManagementType": "AzureStorage",
+                "workLoadType": "AzureFileShare",
+                "schedulePolicy": {
+                  "schedulePolicyType": "SimpleSchedulePolicy",
+                  "scheduleRunFrequency": "Daily",
+                  "scheduleRunTimes": [
+                    "2024-01-01T02:00:00Z"
+                  ]
+                },
+                "retentionPolicy": {
+                  "retentionPolicyType": "LongTermRetentionPolicy",
+                  "dailySchedule": {
+                    "retentionTimes": [
+                      "2024-01-01T02:00:00Z"
+                    ],
+                    "retentionDuration": {
+                      "count": "[parameters('backupRetentionDays')]",
+                      "durationType": "Days"
+                    }
+                  }
+                },
+                "timeZone": "UTC"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.RecoveryServices/vaults/{0}', parameters('vaultName'))]",
+              "name": "[format('{0}-diagnostics', parameters('vaultName'))]",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": true,
+                      "days": 90
+                    }
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "Health",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": true,
+                      "days": 90
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "recoveryServicesVaultId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+            },
+            "recoveryServicesVaultName": {
+              "type": "string",
+              "value": "[parameters('vaultName')]"
+            },
+            "vmBackupPolicyId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), 'EnterpriseVMBackupPolicy')]"
+            },
+            "sqlBackupPolicyId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), 'EnterpriseSQLBackupPolicy')]"
+            },
+            "fileShareBackupPolicyId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), 'EnterpriseFileShareBackupPolicy')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeployment')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "enterpriseNetworkSecurityDeployment",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "firewallName": {
+            "value": "[format('{0}-fw-{1}', parameters('resourcePrefix'), parameters('environmentName'))]"
+          },
+          "vnetName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'networkSecurityDeployment'), '2025-04-01').outputs.vnetName.value]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "enablePremiumFirewall": {
+            "value": true
+          },
+          "enableThreatIntelligence": {
+            "value": true
+          },
+          "enableDnsProxy": {
+            "value": true
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeployment'), '2025-04-01').outputs.workspaceId.value]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "8398001630807209557"
+            }
+          },
+          "parameters": {
+            "firewallName": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure Firewall name"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for resources"
+              }
+            },
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual Network name for firewall"
+              }
+            },
+            "enablePremiumFirewall": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Azure Firewall Premium SKU"
+              }
+            },
+            "enableThreatIntelligence": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable threat intelligence"
+              }
+            },
+            "enableDnsProxy": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable DNS proxy"
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics Workspace ID for diagnostics"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Resource tags"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}-pip', parameters('firewallName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "Static",
+                "publicIPAddressVersion": "IPv4",
+                "ddosSettings": {
+                  "protectionMode": "Enabled"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}/{1}', parameters('vnetName'), 'AzureFirewallSubnet')]",
+              "properties": {
+                "addressPrefix": "10.0.1.0/26",
+                "serviceEndpoints": [],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              }
+            },
+            {
+              "type": "Microsoft.Network/firewallPolicies",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}-policy', parameters('firewallName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "tier": "[if(parameters('enablePremiumFirewall'), 'Premium', 'Standard')]"
+                },
+                "threatIntelMode": "[if(parameters('enableThreatIntelligence'), 'Alert', 'Off')]",
+                "threatIntelWhitelist": {
+                  "ipAddresses": [],
+                  "fqdns": []
+                },
+                "intrusionDetection": "[if(parameters('enablePremiumFirewall'), createObject('mode', 'Alert', 'configuration', createObject('signatureOverrides', createArray(), 'bypassTrafficSettings', createArray())), null())]",
+                "dnsSettings": "[if(parameters('enableDnsProxy'), createObject('servers', createArray(), 'enableProxy', true()), null())]",
+                "insights": {
+                  "isEnabled": true,
+                  "retentionDays": 90,
+                  "logAnalyticsResources": {
+                    "workspaces": [
+                      {
+                        "workspaceId": "[parameters('logAnalyticsWorkspaceId')]"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}/{1}', format('{0}-policy', parameters('firewallName')), 'EnterpriseApplicationRules')]",
+              "properties": {
+                "priority": 100,
+                "ruleCollections": [
+                  {
+                    "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+                    "name": "AllowAzureServices",
+                    "priority": 100,
+                    "action": {
+                      "type": "Allow"
+                    },
+                    "rules": [
+                      {
+                        "ruleType": "ApplicationRule",
+                        "name": "AllowAzureMonitor",
+                        "protocols": [
+                          {
+                            "protocolType": "Https",
+                            "port": 443
+                          }
+                        ],
+                        "targetFqdns": [
+                          "*.ods.opinsights.azure.com",
+                          "*.oms.opinsights.azure.com",
+                          "*.monitoring.azure.com"
+                        ],
+                        "sourceAddresses": [
+                          "*"
+                        ]
+                      },
+                      {
+                        "ruleType": "ApplicationRule",
+                        "name": "AllowAzureBackup",
+                        "protocols": [
+                          {
+                            "protocolType": "Https",
+                            "port": 443
+                          }
+                        ],
+                        "targetFqdns": [
+                          "*.backup.windowsazure.com",
+                          "[format('*.blob.{0}', environment().suffixes.storage)]"
+                        ],
+                        "sourceAddresses": [
+                          "*"
+                        ]
+                      },
+                      {
+                        "ruleType": "ApplicationRule",
+                        "name": "AllowWindowsUpdate",
+                        "protocols": [
+                          {
+                            "protocolType": "Https",
+                            "port": 443
+                          },
+                          {
+                            "protocolType": "Http",
+                            "port": 80
+                          }
+                        ],
+                        "targetFqdns": [
+                          "*.windowsupdate.microsoft.com",
+                          "*.update.microsoft.com",
+                          "*.windowsupdate.com"
+                        ],
+                        "sourceAddresses": [
+                          "*"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/firewallPolicies', format('{0}-policy', parameters('firewallName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}/{1}', format('{0}-policy', parameters('firewallName')), 'EnterpriseNetworkRules')]",
+              "properties": {
+                "priority": 200,
+                "ruleCollections": [
+                  {
+                    "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+                    "name": "AllowCriticalServices",
+                    "priority": 200,
+                    "action": {
+                      "type": "Allow"
+                    },
+                    "rules": [
+                      {
+                        "ruleType": "NetworkRule",
+                        "name": "AllowDNS",
+                        "ipProtocols": [
+                          "UDP"
+                        ],
+                        "sourceAddresses": [
+                          "*"
+                        ],
+                        "destinationAddresses": [
+                          "*"
+                        ],
+                        "destinationPorts": [
+                          "53"
+                        ]
+                      },
+                      {
+                        "ruleType": "NetworkRule",
+                        "name": "AllowNTP",
+                        "ipProtocols": [
+                          "UDP"
+                        ],
+                        "sourceAddresses": [
+                          "*"
+                        ],
+                        "destinationAddresses": [
+                          "*"
+                        ],
+                        "destinationPorts": [
+                          "123"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', format('{0}-policy', parameters('firewallName')), 'EnterpriseApplicationRules')]",
+                "[resourceId('Microsoft.Network/firewallPolicies', format('{0}-policy', parameters('firewallName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/azureFirewalls",
+              "apiVersion": "2023-09-01",
+              "name": "[parameters('firewallName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "name": "AZFW_VNet",
+                  "tier": "[if(parameters('enablePremiumFirewall'), 'Premium', 'Standard')]"
+                },
+                "threatIntelMode": "[if(parameters('enableThreatIntelligence'), 'Alert', 'Off')]",
+                "ipConfigurations": [
+                  {
+                    "name": "firewallIpConfig",
+                    "properties": {
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('firewallName')))]"
+                      },
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AzureFirewallSubnet')]"
+                      }
+                    }
+                  }
+                ],
+                "firewallPolicy": {
+                  "id": "[resourceId('Microsoft.Network/firewallPolicies', format('{0}-policy', parameters('firewallName')))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/firewallPolicies', format('{0}-policy', parameters('firewallName')))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('firewallName')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AzureFirewallSubnet')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Network/azureFirewalls/{0}', parameters('firewallName'))]",
+              "name": "[format('{0}-diagnostics', parameters('firewallName'))]",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": true,
+                      "days": 90
+                    }
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": true,
+                      "days": 90
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/azureFirewalls', parameters('firewallName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2023-09-01",
+              "name": "waf-pip",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "Static",
+                "publicIPAddressVersion": "IPv4",
+                "ddosSettings": {
+                  "protectionMode": "Enabled"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}/{1}', parameters('vnetName'), 'AppGatewaySubnet')]",
+              "properties": {
+                "addressPrefix": "10.0.2.0/26",
+                "serviceEndpoints": [],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AzureFirewallSubnet')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
+              "apiVersion": "2023-09-01",
+              "name": "enterprise-waf-policy",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "policySettings": {
+                  "requestBodyCheck": true,
+                  "maxRequestBodySizeInKb": 128,
+                  "fileUploadLimitInMb": 100,
+                  "state": "Enabled",
+                  "mode": "Prevention"
+                },
+                "managedRules": {
+                  "managedRuleSets": [
+                    {
+                      "ruleSetType": "OWASP",
+                      "ruleSetVersion": "3.2",
+                      "ruleGroupOverrides": []
+                    },
+                    {
+                      "ruleSetType": "Microsoft_BotManagerRuleSet",
+                      "ruleSetVersion": "1.0"
+                    }
+                  ]
+                },
+                "customRules": [
+                  {
+                    "name": "BlockSuspiciousUserAgents",
+                    "priority": 100,
+                    "ruleType": "MatchRule",
+                    "action": "Block",
+                    "matchConditions": [
+                      {
+                        "matchVariables": [
+                          {
+                            "variableName": "RequestHeaders",
+                            "selector": "User-Agent"
+                          }
+                        ],
+                        "operator": "Contains",
+                        "negationConditon": false,
+                        "matchValues": [
+                          "bot",
+                          "crawler",
+                          "spider"
+                        ],
+                        "transforms": [
+                          "Lowercase"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "RateLimitPerIP",
+                    "priority": 200,
+                    "ruleType": "RateLimitRule",
+                    "rateLimitDuration": "OneMin",
+                    "rateLimitThreshold": 100,
+                    "action": "Block",
+                    "matchConditions": [
+                      {
+                        "matchVariables": [
+                          {
+                            "variableName": "RemoteAddr"
+                          }
+                        ],
+                        "operator": "IPMatch",
+                        "negationConditon": false,
+                        "matchValues": [
+                          "0.0.0.0/0"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/applicationGateways",
+              "apiVersion": "2023-09-01",
+              "name": "enterprise-waf",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "name": "WAF_v2",
+                  "tier": "WAF_v2",
+                  "capacity": 2
+                },
+                "gatewayIPConfigurations": [
+                  {
+                    "name": "appGatewayIpConfig",
+                    "properties": {
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AppGatewaySubnet')]"
+                      }
+                    }
+                  }
+                ],
+                "frontendIPConfigurations": [
+                  {
+                    "name": "appGatewayFrontendIP",
+                    "properties": {
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'waf-pip')]"
+                      }
+                    }
+                  }
+                ],
+                "frontendPorts": [
+                  {
+                    "name": "port443",
+                    "properties": {
+                      "port": 443
+                    }
+                  },
+                  {
+                    "name": "port80",
+                    "properties": {
+                      "port": 80
+                    }
+                  }
+                ],
+                "backendAddressPools": [
+                  {
+                    "name": "appServicePool",
+                    "properties": {
+                      "backendAddresses": []
+                    }
+                  }
+                ],
+                "backendHttpSettingsCollection": [
+                  {
+                    "name": "appServiceBackendHttpSettings",
+                    "properties": {
+                      "port": 443,
+                      "protocol": "Https",
+                      "cookieBasedAffinity": "Disabled",
+                      "pickHostNameFromBackendAddress": true,
+                      "requestTimeout": 30
+                    }
+                  }
+                ],
+                "httpListeners": [
+                  {
+                    "name": "appServiceHttpListener",
+                    "properties": {
+                      "frontendIPConfiguration": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', 'enterprise-waf', 'appGatewayFrontendIP')]"
+                      },
+                      "frontendPort": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', 'enterprise-waf', 'port443')]"
+                      },
+                      "protocol": "Https",
+                      "requireServerNameIndication": false
+                    }
+                  }
+                ],
+                "requestRoutingRules": [
+                  {
+                    "name": "appServiceRoutingRule",
+                    "properties": {
+                      "ruleType": "Basic",
+                      "priority": 100,
+                      "httpListener": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', 'enterprise-waf', 'appServiceHttpListener')]"
+                      },
+                      "backendAddressPool": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'enterprise-waf', 'appServicePool')]"
+                      },
+                      "backendHttpSettings": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', 'enterprise-waf', 'appServiceBackendHttpSettings')]"
+                      }
+                    }
+                  }
+                ],
+                "webApplicationFirewallConfiguration": {
+                  "enabled": true,
+                  "firewallMode": "Prevention",
+                  "ruleSetType": "OWASP",
+                  "ruleSetVersion": "3.2",
+                  "disabledRuleGroups": [],
+                  "requestBodyCheck": true,
+                  "maxRequestBodySizeInKb": 128,
+                  "fileUploadLimitInMb": 100
+                },
+                "firewallPolicy": {
+                  "id": "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', 'enterprise-waf-policy')]"
+                },
+                "enableHttp2": true,
+                "autoscaleConfiguration": {
+                  "minCapacity": 2,
+                  "maxCapacity": 10
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AppGatewaySubnet')]",
+                "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', 'enterprise-waf-policy')]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', 'waf-pip')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Network/applicationGateways/{0}', 'enterprise-waf')]",
+              "name": "waf-diagnostics",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": true,
+                      "days": 90
+                    }
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": true,
+                      "days": 90
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/applicationGateways', 'enterprise-waf')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "firewallId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/azureFirewalls', parameters('firewallName'))]"
+            },
+            "firewallPrivateIP": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/azureFirewalls', parameters('firewallName')), '2023-09-01').ipConfigurations[0].properties.privateIPAddress]"
+            },
+            "wafId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/applicationGateways', 'enterprise-waf')]"
+            },
+            "wafPublicIP": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', 'waf-pip'), '2023-09-01').ipAddress]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeployment')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'networkSecurityDeployment')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "costManagementDeployment",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "monthlyBudgetAmount": {
+            "value": 10000
+          },
+          "notificationEmails": {
+            "value": [
+              "[parameters('securityContactEmail')]"
+            ]
+          },
+          "resourceGroupName": {
+            "value": "[variables('resourceGroupName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "2085498250858399725"
+            }
+          },
+          "parameters": {
+            "monthlyBudgetAmount": {
+              "type": "int",
+              "defaultValue": 10000,
+              "metadata": {
+                "description": "Budget amount in USD"
+              }
+            },
+            "alertThresholds": {
+              "type": "array",
+              "defaultValue": [
+                50,
+                75,
+                90,
+                100,
+                110
+              ],
+              "metadata": {
+                "description": "Budget alert threshold percentages"
+              }
+            },
+            "notificationEmails": {
+              "type": "array",
+              "metadata": {
+                "description": "Alert notification emails"
+              }
+            },
+            "resourceGroupName": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Resource Group name for scoped budget (optional)"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Consumption/budgets",
+              "apiVersion": "2023-05-01",
+              "name": "EnterpriseMonthlyCostBudget",
+              "properties": {
+                "category": "Cost",
+                "amount": "[parameters('monthlyBudgetAmount')]",
+                "timeGrain": "Monthly",
+                "timePeriod": {
+                  "startDate": "2024-01-01",
+                  "endDate": "2026-12-31"
+                },
+                "filter": "[if(not(equals(parameters('resourceGroupName'), '')), createObject('dimensions', createObject('name', 'ResourceGroupName', 'operator', 'In', 'values', createArray(parameters('resourceGroupName')))), createObject())]",
+                "notifications": {
+                  "Actual_50Percent": {
+                    "enabled": true,
+                    "operator": "GreaterThan",
+                    "threshold": "[parameters('alertThresholds')[0]]",
+                    "contactEmails": "[parameters('notificationEmails')]",
+                    "contactRoles": [
+                      "Owner",
+                      "Contributor"
+                    ],
+                    "thresholdType": "Actual"
+                  },
+                  "Actual_75Percent": {
+                    "enabled": true,
+                    "operator": "GreaterThan",
+                    "threshold": "[parameters('alertThresholds')[1]]",
+                    "contactEmails": "[parameters('notificationEmails')]",
+                    "contactRoles": [
+                      "Owner",
+                      "Contributor"
+                    ],
+                    "thresholdType": "Actual"
+                  },
+                  "Actual_90Percent": {
+                    "enabled": true,
+                    "operator": "GreaterThan",
+                    "threshold": "[parameters('alertThresholds')[2]]",
+                    "contactEmails": "[parameters('notificationEmails')]",
+                    "contactRoles": [
+                      "Owner",
+                      "Contributor"
+                    ],
+                    "thresholdType": "Actual"
+                  },
+                  "Actual_100Percent": {
+                    "enabled": true,
+                    "operator": "GreaterThan",
+                    "threshold": "[parameters('alertThresholds')[3]]",
+                    "contactEmails": "[parameters('notificationEmails')]",
+                    "contactRoles": [
+                      "Owner",
+                      "Contributor"
+                    ],
+                    "thresholdType": "Actual"
+                  },
+                  "Forecasted_110Percent": {
+                    "enabled": true,
+                    "operator": "GreaterThan",
+                    "threshold": "[parameters('alertThresholds')[4]]",
+                    "contactEmails": "[parameters('notificationEmails')]",
+                    "contactRoles": [
+                      "Owner",
+                      "Contributor"
+                    ],
+                    "thresholdType": "Forecasted"
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Consumption/budgets",
+              "apiVersion": "2023-05-01",
+              "name": "EnterpriseQuarterlyCostBudget",
+              "properties": {
+                "category": "Cost",
+                "amount": "[mul(parameters('monthlyBudgetAmount'), 3)]",
+                "timeGrain": "Quarterly",
+                "timePeriod": {
+                  "startDate": "2024-01-01",
+                  "endDate": "2026-12-31"
+                },
+                "filter": "[if(not(equals(parameters('resourceGroupName'), '')), createObject('dimensions', createObject('name', 'ResourceGroupName', 'operator', 'In', 'values', createArray(parameters('resourceGroupName')))), createObject())]",
+                "notifications": {
+                  "Actual_75Percent": {
+                    "enabled": true,
+                    "operator": "GreaterThan",
+                    "threshold": 75,
+                    "contactEmails": "[parameters('notificationEmails')]",
+                    "contactRoles": [
+                      "Owner"
+                    ],
+                    "thresholdType": "Actual"
+                  },
+                  "Actual_100Percent": {
+                    "enabled": true,
+                    "operator": "GreaterThan",
+                    "threshold": 100,
+                    "contactEmails": "[parameters('notificationEmails')]",
+                    "contactRoles": [
+                      "Owner"
+                    ],
+                    "thresholdType": "Actual"
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Consumption/budgets",
+              "apiVersion": "2023-05-01",
+              "name": "EnterpriseAnnualCostBudget",
+              "properties": {
+                "category": "Cost",
+                "amount": "[mul(parameters('monthlyBudgetAmount'), 12)]",
+                "timeGrain": "Annually",
+                "timePeriod": {
+                  "startDate": "2024-01-01",
+                  "endDate": "2026-12-31"
+                },
+                "filter": "[if(not(equals(parameters('resourceGroupName'), '')), createObject('dimensions', createObject('name', 'ResourceGroupName', 'operator', 'In', 'values', createArray(parameters('resourceGroupName')))), createObject())]",
+                "notifications": {
+                  "Actual_90Percent": {
+                    "enabled": true,
+                    "operator": "GreaterThan",
+                    "threshold": 90,
+                    "contactEmails": "[parameters('notificationEmails')]",
+                    "contactRoles": [
+                      "Owner"
+                    ],
+                    "thresholdType": "Actual"
+                  },
+                  "Actual_100Percent": {
+                    "enabled": true,
+                    "operator": "GreaterThan",
+                    "threshold": 100,
+                    "contactEmails": "[parameters('notificationEmails')]",
+                    "contactRoles": [
+                      "Owner"
+                    ],
+                    "thresholdType": "Actual"
+                  }
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "monthlyBudgetId": {
+              "type": "string",
+              "value": "[subscriptionResourceId('Microsoft.Consumption/budgets', 'EnterpriseMonthlyCostBudget')]"
+            },
+            "quarterlyBudgetId": {
+              "type": "string",
+              "value": "[subscriptionResourceId('Microsoft.Consumption/budgets', 'EnterpriseQuarterlyCostBudget')]"
+            },
+            "annualBudgetId": {
+              "type": "string",
+              "value": "[subscriptionResourceId('Microsoft.Consumption/budgets', 'EnterpriseAnnualCostBudget')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "enterpriseMonitoringDeployment",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeployment'), '2025-04-01').outputs.workspaceId.value]"
+          },
+          "actionGroupName": {
+            "value": "[format('{0}-critical-alerts-{1}', parameters('resourcePrefix'), parameters('environmentName'))]"
+          },
+          "notificationEmails": {
+            "value": [
+              "[parameters('securityContactEmail')]"
+            ]
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "6033142435859095645"
+            }
+          },
+          "parameters": {
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics Workspace ID"
+              }
+            },
+            "actionGroupName": {
+              "type": "string",
+              "metadata": {
+                "description": "Action group name for alerts"
+              }
+            },
+            "notificationEmails": {
+              "type": "array",
+              "metadata": {
+                "description": "Alert notification emails"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for resources"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Resource tags"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "enterprise-appinsights",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "WorkspaceResourceId": "[parameters('logAnalyticsWorkspaceId')]",
+                "IngestionMode": "LogAnalytics",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled",
+                "RetentionInDays": 90
+              }
+            },
+            {
+              "type": "Microsoft.Insights/actionGroups",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('actionGroupName')]",
+              "location": "Global",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "copy": [
+                  {
+                    "name": "emailReceivers",
+                    "count": "[length(parameters('notificationEmails'))]",
+                    "input": {
+                      "name": "[format('email-{0}', copyIndex('emailReceivers'))]",
+                      "emailAddress": "[parameters('notificationEmails')[copyIndex('emailReceivers')]]",
+                      "useCommonAlertSchema": true
+                    }
+                  }
+                ],
+                "groupShortName": "CritAlert",
+                "enabled": true,
+                "smsReceivers": [],
+                "webhookReceivers": [],
+                "azureAppPushReceivers": [],
+                "voiceReceivers": []
+              }
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2023-03-15-preview",
+              "name": "FailedAuthenticationAlert",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "displayName": "High Number of Failed Authentication Attempts",
+                "description": "Triggers when there are more than 10 failed authentication attempts in 5 minutes",
+                "severity": 1,
+                "enabled": true,
+                "evaluationFrequency": "PT5M",
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "windowSize": "PT5M",
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "SecurityEvent | where EventID == 4625 | summarize count() by Computer | where count_ > 10",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2023-03-15-preview",
+              "name": "SuspiciousNetworkActivity",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "displayName": "Suspicious Network Activity Detected",
+                "description": "Triggers when unusual network patterns are detected",
+                "severity": 2,
+                "enabled": true,
+                "evaluationFrequency": "PT15M",
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "windowSize": "PT15M",
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "AzureNetworkAnalytics_CL | where FlowType_s == \"MaliciousFlow\" | summarize count() | where count_ > 0",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2023-03-15-preview",
+              "name": "HighCPUUsage",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "displayName": "High CPU Usage Alert",
+                "description": "Triggers when CPU usage exceeds 90% for 15 minutes",
+                "severity": 2,
+                "enabled": true,
+                "evaluationFrequency": "PT5M",
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "windowSize": "PT15M",
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "Perf | where CounterName == \"% Processor Time\" | summarize avg(CounterValue) by Computer | where avg_CounterValue > 90",
+                      "timeAggregation": "Average",
+                      "operator": "GreaterThan",
+                      "threshold": 90,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 3,
+                        "minFailingPeriodsToAlert": 3
+                      }
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2023-03-15-preview",
+              "name": "HighMemoryUsage",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "displayName": "High Memory Usage Alert",
+                "description": "Triggers when memory usage exceeds 90% for 15 minutes",
+                "severity": 2,
+                "enabled": true,
+                "evaluationFrequency": "PT5M",
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "windowSize": "PT15M",
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "Perf | where CounterName == \"% Committed Bytes In Use\" | summarize avg(CounterValue) by Computer | where avg_CounterValue > 90",
+                      "timeAggregation": "Average",
+                      "operator": "GreaterThan",
+                      "threshold": 90,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 3,
+                        "minFailingPeriodsToAlert": 3
+                      }
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2023-03-15-preview",
+              "name": "KeyVaultAccessAnomaly",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "displayName": "Key Vault Access Anomaly",
+                "description": "Triggers when unusual Key Vault access patterns are detected",
+                "severity": 1,
+                "enabled": true,
+                "evaluationFrequency": "PT15M",
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "windowSize": "PT15M",
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "AzureDiagnostics | where ResourceProvider == \"MICROSOFT.KEYVAULT\" | where ResultType != \"Success\" | summarize count() | where count_ > 5",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2023-03-15-preview",
+              "name": "StorageAccountAnomaly",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "displayName": "Storage Account Unusual Activity",
+                "description": "Triggers when unusual storage access patterns are detected",
+                "severity": 2,
+                "enabled": true,
+                "evaluationFrequency": "PT15M",
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "windowSize": "PT1H",
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "StorageBlobLogs | where StatusCode >= 400 | summarize count() | where count_ > 100",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2023-03-15-preview",
+              "name": "ServiceHealthAlert",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "displayName": "Service Availability Alert",
+                "description": "Triggers when service availability drops below 99.9%",
+                "severity": 1,
+                "enabled": true,
+                "evaluationFrequency": "PT5M",
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "windowSize": "PT15M",
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "AzureMetrics | where MetricName == \"Availability\" | summarize avg(Average) | where avg_Average < 99.9",
+                      "timeAggregation": "Average",
+                      "operator": "LessThan",
+                      "threshold": 99,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 2,
+                        "minFailingPeriodsToAlert": 2
+                      }
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2023-03-15-preview",
+              "name": "UnexpectedCostIncrease",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "displayName": "Unexpected Cost Increase",
+                "description": "Triggers when daily cost increases by more than 50% compared to previous day",
+                "severity": 2,
+                "enabled": true,
+                "evaluationFrequency": "PT1H",
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "windowSize": "PT24H",
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "Usage | summarize sum(Quantity) by bin(TimeGenerated, 1d) | extend PrevDay = prev(sum_Quantity, 1) | where sum_Quantity > PrevDay * 1.5",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "appInsightsId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/components', 'enterprise-appinsights')]"
+            },
+            "appInsightsInstrumentationKey": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', 'enterprise-appinsights'), '2020-02-02').InstrumentationKey]"
+            },
+            "appInsightsConnectionString": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', 'enterprise-appinsights'), '2020-02-02').ConnectionString]"
+            },
+            "actionGroupId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeployment')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[variables('resourceGroupName')]"
+    }
+  }
+}

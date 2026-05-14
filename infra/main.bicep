@@ -63,6 +63,11 @@ module securityCenter 'security-center.bicep' = {
     enableDefenderForKeyVault: true
     enableDefenderForResourceManager: true
     enableDefenderForDns: true
+    enableDefenderForAppService: true
+    enableDefenderForContainers: true
+    enableDefenderForSql: true
+    enableDefenderForOpenSourceDatabases: true
+    enableDefenderForCosmosDb: true
   }
 }
 
@@ -124,6 +129,88 @@ module automationAccount 'automation-account.bicep' = {
   }
 }
 
+// Enterprise Compliance Frameworks
+module complianceFrameworks 'compliance-frameworks.bicep' = {
+  name: 'complianceFrameworksDeployment'
+  scope: subscription()
+  params: {
+    enableISO27001: true
+    enableSOC2: true
+    enableHIPAA: true
+    enablePCIDSS: true
+    enableNIST: true
+  }
+}
+
+// Enterprise Backup and Disaster Recovery
+module backupRecovery 'backup-recovery.bicep' = {
+  name: 'backupRecoveryDeployment'
+  scope: resourceGroup
+  params: {
+    vaultName: '${resourcePrefix}-rsv-${environmentName}'
+    location: location
+    backupRetentionDays: 90
+    enableGeoRedundantBackup: true
+    enableCrossRegionRestore: true
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+    tags: tags
+  }
+}
+
+// Enterprise Network Security (Firewall and WAF)
+module enterpriseNetworkSecurity 'enterprise-network-security.bicep' = {
+  name: 'enterpriseNetworkSecurityDeployment'
+  scope: resourceGroup
+  params: {
+    firewallName: '${resourcePrefix}-fw-${environmentName}'
+    vnetName: networkSecurity.outputs.vnetName
+    location: location
+    enablePremiumFirewall: true
+    enableThreatIntelligence: true
+    enableDnsProxy: true
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+    tags: tags
+  }
+}
+
+// Enterprise Cost Management
+module costManagement 'cost-management.bicep' = {
+  name: 'costManagementDeployment'
+  scope: subscription()
+  params: {
+    monthlyBudgetAmount: 10000
+    notificationEmails: [securityContactEmail]
+    resourceGroupName: resourceGroupName
+  }
+}
+
+// Enterprise Monitoring and Alerting
+module enterpriseMonitoring 'enterprise-monitoring.bicep' = {
+  name: 'enterpriseMonitoringDeployment'
+  scope: resourceGroup
+  params: {
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+    actionGroupName: '${resourcePrefix}-critical-alerts-${environmentName}'
+    notificationEmails: [securityContactEmail]
+    location: location
+    tags: tags
+  }
+}
+
+// Enterprise RBAC (optional - requires group IDs to be configured)
+// Uncomment and configure with your Azure AD group IDs
+// module enterpriseRBAC 'enterprise-rbac.bicep' = {
+//   name: 'enterpriseRBACDeployment'
+//   scope: resourceGroup
+//   params: {
+//     securityTeamGroupId: '<your-security-team-group-id>'
+//     devTeamGroupId: '<your-dev-team-group-id>'
+//     opsTeamGroupId: '<your-ops-team-group-id>'
+//     enableSecurityTeam: true
+//     enableDevTeam: true
+//     enableOpsTeam: true
+//   }
+// }
 // Outputs
 output resourceGroupName string = resourceGroup.name
 output automationAccountId string = automationAccount.outputs.automationAccountId

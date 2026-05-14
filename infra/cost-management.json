@@ -1,0 +1,208 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "2085498250858399725"
+    }
+  },
+  "parameters": {
+    "monthlyBudgetAmount": {
+      "type": "int",
+      "defaultValue": 10000,
+      "metadata": {
+        "description": "Budget amount in USD"
+      }
+    },
+    "alertThresholds": {
+      "type": "array",
+      "defaultValue": [
+        50,
+        75,
+        90,
+        100,
+        110
+      ],
+      "metadata": {
+        "description": "Budget alert threshold percentages"
+      }
+    },
+    "notificationEmails": {
+      "type": "array",
+      "metadata": {
+        "description": "Alert notification emails"
+      }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource Group name for scoped budget (optional)"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Consumption/budgets",
+      "apiVersion": "2023-05-01",
+      "name": "EnterpriseMonthlyCostBudget",
+      "properties": {
+        "category": "Cost",
+        "amount": "[parameters('monthlyBudgetAmount')]",
+        "timeGrain": "Monthly",
+        "timePeriod": {
+          "startDate": "2024-01-01",
+          "endDate": "2026-12-31"
+        },
+        "filter": "[if(not(equals(parameters('resourceGroupName'), '')), createObject('dimensions', createObject('name', 'ResourceGroupName', 'operator', 'In', 'values', createArray(parameters('resourceGroupName')))), createObject())]",
+        "notifications": {
+          "Actual_50Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": "[parameters('alertThresholds')[0]]",
+            "contactEmails": "[parameters('notificationEmails')]",
+            "contactRoles": [
+              "Owner",
+              "Contributor"
+            ],
+            "thresholdType": "Actual"
+          },
+          "Actual_75Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": "[parameters('alertThresholds')[1]]",
+            "contactEmails": "[parameters('notificationEmails')]",
+            "contactRoles": [
+              "Owner",
+              "Contributor"
+            ],
+            "thresholdType": "Actual"
+          },
+          "Actual_90Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": "[parameters('alertThresholds')[2]]",
+            "contactEmails": "[parameters('notificationEmails')]",
+            "contactRoles": [
+              "Owner",
+              "Contributor"
+            ],
+            "thresholdType": "Actual"
+          },
+          "Actual_100Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": "[parameters('alertThresholds')[3]]",
+            "contactEmails": "[parameters('notificationEmails')]",
+            "contactRoles": [
+              "Owner",
+              "Contributor"
+            ],
+            "thresholdType": "Actual"
+          },
+          "Forecasted_110Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": "[parameters('alertThresholds')[4]]",
+            "contactEmails": "[parameters('notificationEmails')]",
+            "contactRoles": [
+              "Owner",
+              "Contributor"
+            ],
+            "thresholdType": "Forecasted"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Consumption/budgets",
+      "apiVersion": "2023-05-01",
+      "name": "EnterpriseQuarterlyCostBudget",
+      "properties": {
+        "category": "Cost",
+        "amount": "[mul(parameters('monthlyBudgetAmount'), 3)]",
+        "timeGrain": "Quarterly",
+        "timePeriod": {
+          "startDate": "2024-01-01",
+          "endDate": "2026-12-31"
+        },
+        "filter": "[if(not(equals(parameters('resourceGroupName'), '')), createObject('dimensions', createObject('name', 'ResourceGroupName', 'operator', 'In', 'values', createArray(parameters('resourceGroupName')))), createObject())]",
+        "notifications": {
+          "Actual_75Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": 75,
+            "contactEmails": "[parameters('notificationEmails')]",
+            "contactRoles": [
+              "Owner"
+            ],
+            "thresholdType": "Actual"
+          },
+          "Actual_100Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": 100,
+            "contactEmails": "[parameters('notificationEmails')]",
+            "contactRoles": [
+              "Owner"
+            ],
+            "thresholdType": "Actual"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Consumption/budgets",
+      "apiVersion": "2023-05-01",
+      "name": "EnterpriseAnnualCostBudget",
+      "properties": {
+        "category": "Cost",
+        "amount": "[mul(parameters('monthlyBudgetAmount'), 12)]",
+        "timeGrain": "Annually",
+        "timePeriod": {
+          "startDate": "2024-01-01",
+          "endDate": "2026-12-31"
+        },
+        "filter": "[if(not(equals(parameters('resourceGroupName'), '')), createObject('dimensions', createObject('name', 'ResourceGroupName', 'operator', 'In', 'values', createArray(parameters('resourceGroupName')))), createObject())]",
+        "notifications": {
+          "Actual_90Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": 90,
+            "contactEmails": "[parameters('notificationEmails')]",
+            "contactRoles": [
+              "Owner"
+            ],
+            "thresholdType": "Actual"
+          },
+          "Actual_100Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": 100,
+            "contactEmails": "[parameters('notificationEmails')]",
+            "contactRoles": [
+              "Owner"
+            ],
+            "thresholdType": "Actual"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "monthlyBudgetId": {
+      "type": "string",
+      "value": "[subscriptionResourceId('Microsoft.Consumption/budgets', 'EnterpriseMonthlyCostBudget')]"
+    },
+    "quarterlyBudgetId": {
+      "type": "string",
+      "value": "[subscriptionResourceId('Microsoft.Consumption/budgets', 'EnterpriseQuarterlyCostBudget')]"
+    },
+    "annualBudgetId": {
+      "type": "string",
+      "value": "[subscriptionResourceId('Microsoft.Consumption/budgets', 'EnterpriseAnnualCostBudget')]"
+    }
+  }
+}
