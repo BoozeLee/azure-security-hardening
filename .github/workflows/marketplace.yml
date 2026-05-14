@@ -143,7 +143,7 @@ jobs:
           EOF
 
       - name: "Upload Demo Package"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: azure-security-demo
           path: demo-package/
@@ -239,7 +239,7 @@ jobs:
           EOF
 
       - name: "Upload Proposal"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sales-proposal
           path: proposals/
@@ -371,7 +371,7 @@ jobs:
           chmod +x enterprise-package/deploy-enterprise.sh
 
       - name: "Upload Enterprise Package"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: azure-security-enterprise
           path: enterprise-package/

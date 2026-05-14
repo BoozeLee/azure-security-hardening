@@ -288,7 +288,7 @@ jobs:
           curl -s -X POST -H 'Content-Type: application/json' -d '{"channel":"agents","message":"Azure security deployment FAILED for ${{ env.ENVIRONMENT }} (commit: ${{ github.sha }})"}' "${{ secrets.QWE_WEBHOOK }}" || echo "QWE notify failed"
 
       - name: "Upload Security Report as Artifact"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: security-compliance-report
           path: security-report.txt
