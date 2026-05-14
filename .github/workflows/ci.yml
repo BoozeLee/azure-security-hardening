@@ -138,6 +138,7 @@ jobs:
           shellcheck deploy-security.sh
           shellcheck deploy-minimal-cost.sh
           shellcheck deploy-emergency.sh
+          shellcheck ai-workflow-orchestrator.sh
 
   qa-qwe:
     name: "QA - QWE Orchestrator Dry-Run"

@@ -111,5 +111,20 @@ module azurePolicyAssignment 'azure-policy.bicep' = {
   }
 }
 
+// Azure Automation Account with Security Runbooks
+module automationAccount 'automation-account.bicep' = {
+  name: 'automationAccountDeployment'
+  scope: resourceGroup
+  params: {
+    automationAccountName: '${resourcePrefix}-auto-${environmentName}'
+    location: location
+    sku: 'Basic'
+    tags: tags
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+  }
+}
+
 // Outputs
 output resourceGroupName string = resourceGroup.name
+output automationAccountId string = automationAccount.outputs.automationAccountId
+output automationPrincipalId string = automationAccount.outputs.principalId
