@@ -178,7 +178,7 @@ jobs:
 
       - name: "Upload Customer Data (artifact, do not commit)"
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: customers-${{ steps.payment.outputs.payment_id }}
           path: customers.json
@@ -190,7 +190,7 @@ jobs:
           echo "New customer $MASKED_EMAIL purchased ${{ steps.payment.outputs.product }}. Uploaded customer artifact customers-${{ steps.payment.outputs.payment_id }}." | gh issue create --title "New customer purchased" --body - || true
 
       - name: "Upload License Package"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: customer-license-${{ steps.payment.outputs.payment_id }}
           path: customer-package.tar.gz
