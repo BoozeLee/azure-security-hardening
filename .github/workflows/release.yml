@@ -148,7 +148,7 @@ jobs:
           sha256sum azure-security-hardening-${{ steps.version.outputs.version }}.tar.gz > checksums.txt
 
       - name: "Create GitHub Release"
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: "Azure Security Hardening ${{ steps.version.outputs.version }}"
