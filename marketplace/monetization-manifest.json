@@ -1,0 +1,20 @@
+{
+  "classification": "product",
+  "files": {
+    ".github/FUNDING.yml": "skipped-existing",
+    "COMMERCIAL.md": "written",
+    "PRIVACY.md": "written",
+    "SECURITY.md": "skipped-existing",
+    "SPONSORS.md": "written",
+    "SUPPORT.md": "written",
+    "docs/MONETIZATION.md": "written",
+    "marketplace/direct-stripe-product.md": "written",
+    "marketplace/release-checklist.md": "written",
+    "marketplace/stripe/prices.template.json": "written",
+    "marketplace/stripe/products.template.json": "written"
+  },
+  "project": "Azure Security Hardening",
+  "secret_policy": "No credentials are stored in repository files.",
+  "slug": "azure-security-hardening",
+  "source_repo": "BoozeLee/azure-security-hardening"
+}

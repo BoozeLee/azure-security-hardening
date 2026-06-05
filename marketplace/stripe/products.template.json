@@ -1,0 +1,13 @@
+{
+  "products": [
+    {
+      "name": "Azure Security Hardening",
+      "description": "Commercial support and delivery package for Azure Security Hardening.",
+      "metadata": {
+        "project": "azure-security-hardening",
+        "source_repo": "BoozeLee/azure-security-hardening",
+        "managed_by": "monetization-launch"
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "prices": [
+    {
+      "product_lookup_key": "azure-security-hardening-personal",
+      "currency": "eur",
+      "unit_amount": 2900,
+      "billing_scheme": "per_unit",
+      "metadata": {
+        "tier": "personal",
+        "project": "azure-security-hardening"
+      }
+    }
+  ]
+}
